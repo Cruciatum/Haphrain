@@ -25,6 +25,7 @@ namespace Haphrain.Classes.Commands
                 doc.Save(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.1", @"Data\Guilds.xml"));
 
                 await Context.Channel.SendMessageAsync($"{Context.User.Mention}, I have updated your server's prefix to {newPrefix}");
+                //Checking something
             }
         }
 
