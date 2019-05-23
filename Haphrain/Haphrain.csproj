@@ -5,4 +5,15 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Discord.Net" Version="2.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Classes\Data\" />
+    <Folder Include="Resources\Database\" />
+    <Folder Include="Resources\Datatypes\" />
+    <Folder Include="Resources\Extensions\" />
+  </ItemGroup>
+
 </Project>
