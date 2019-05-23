@@ -142,7 +142,6 @@ namespace Haphrain
             {
                 Console.WriteLine($"{DateTime.Now} at Commands -> Something went wrong when executing a command.");
                 Console.WriteLine($"Command text: {context.Message.Content} | Error: {Result.ErrorReason}");
-                //Testing webhook
             }
         }
     }
