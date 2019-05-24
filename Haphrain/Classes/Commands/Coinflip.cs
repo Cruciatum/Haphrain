@@ -7,7 +7,7 @@ namespace Haphrain.Classes.Commands
     public class Coinflip : ModuleBase<SocketCommandContext>
     {
         [Command("coinflip"), Alias("cf", "coin", "flip"), Summary("Flip a coin")]
-        public async Task cf()
+        public async Task Cf()
         {
             int result = 0;
             Random r = new Random();
