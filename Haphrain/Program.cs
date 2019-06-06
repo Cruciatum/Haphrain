@@ -10,6 +10,7 @@ using Discord.WebSocket;
 using Discord.Commands;
 using System.Diagnostics;
 using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Haphrain
 {
@@ -17,6 +18,7 @@ namespace Haphrain
     {
         private DiscordSocketClient Client;
         private CommandService Commands;
+        private IServiceProvider Provider;
         private XmlDocument GuildsFile = new XmlDocument();
         private readonly string GuildsFileLoc = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.1", @"Data\Guilds.xml");
 
@@ -35,6 +37,11 @@ namespace Haphrain
                 DefaultRunMode = RunMode.Async,
                 LogLevel = LogSeverity.Debug
             });
+
+            Provider = new ServiceCollection()
+                .AddSingleton(Client)
+                .AddSingleton(Commands)
+                .BuildServiceProvider();
 
             Client.MessageReceived += Client_MessageReceived;
             await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), null);
@@ -135,9 +142,9 @@ namespace Haphrain
 
             if (prefixNode != null) guildPrefix = prefixNode.InnerText;
 
-            if (!(msg.HasStringPrefix(guildPrefix, ref argPos))) return;
+            if (!(msg.HasStringPrefix(guildPrefix, ref argPos)) && !(msg.HasMentionPrefix(Client.CurrentUser, ref argPos))) return;
 
-            var Result = await Commands.ExecuteAsync(context, argPos, null);
+            var Result = await Commands.ExecuteAsync(context, argPos, Provider);
             if (!Result.IsSuccess)
             {
                 Console.WriteLine($"{DateTime.Now} at Commands -> Something went wrong when executing a command.");
