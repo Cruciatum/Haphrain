@@ -65,12 +65,24 @@ namespace Haphrain
             await Task.Delay(-1);
         }
 
+        private async Task CheckGuildsStartup()
+        {
+            GuildsFile.Load(GuildsFileLoc);
+            var root = GuildsFile.DocumentElement;
+            foreach (SocketGuild g in Client.Guilds)
+            {
+                if (GuildsFile.SelectSingleNode($"/Guilds/Guild[@GuildID='{g.Id}']") == null)
+                {
+                    await Client_JoinedGuild(g);
+                }
+            }
+        }
+
         private async Task Client_LeftGuild(SocketGuild arg)
         {
             Console.WriteLine($"{DateTime.Now} -> Left guild: {arg.Id}");
 
             GuildsFile.Load(GuildsFileLoc);
-            //remove guildobject from Guilds file
             var root = GuildsFile.DocumentElement;
             var guildNode = GuildsFile.SelectSingleNode($"/Guilds/Guild[@GuildID='{arg.Id}']");
 
@@ -123,6 +135,7 @@ namespace Haphrain
         private async Task Client_Ready()
         {
             await Client.SetGameAsync("Developing this badboy");
+            await CheckGuildsStartup();
         }
 
         private async Task Client_MessageReceived(SocketMessage arg)

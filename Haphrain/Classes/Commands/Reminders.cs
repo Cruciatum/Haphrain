@@ -24,7 +24,7 @@ namespace Haphrain.Classes.Commands
             foreach (string s in msg)
             {
                 try { user = await CustomUserTypereader.GetUserFromString(s, Context.Guild); mentionString = s; hasMention = true; }
-                catch { }
+                catch { /*No mention was found*/ }
             }
 
             time = time.ToLower();
@@ -88,26 +88,25 @@ namespace Haphrain.Classes.Commands
         private async Task TimerStart(ulong time, ISocketMessageChannel channel, SocketUser user, string msg, IUser u = null, string mentionString = "")
         {
             Timer t = new Timer();
-            ElapsedEventHandler handler =
-                async delegate (object sender, ElapsedEventArgs e)
+            async void handler(object sender, ElapsedEventArgs e)
+            {
+                t.Stop();
+                if (u != null && mentionString != "")
                 {
-                    t.Stop();
-                    if (u != null && mentionString != "")
-                    {
-                        string[] splitString = new string[2];
-                        splitString = msg.Split(mentionString);
-                        await channel.SendMessageAsync(
-                            string.Format("{0}, Automated reminder: {1} {2} {3}",
-                            user.Mention,
-                            splitString[0] == "" ? "" : string.Concat("`",splitString[0],"`"),
-                            u.Mention,
-                            splitString[1] == "" ? "" : string.Concat("`",splitString[1],"`")));
-                    }
-                    else
-                    {
-                        await channel.SendMessageAsync($"{user.Mention}, Automated reminder: `{msg}`");
-                    }
-                };
+                    string[] splitString = new string[2];
+                    splitString = msg.Split(mentionString);
+                    await channel.SendMessageAsync(
+                        string.Format("{0}, Automated reminder: {1} {2} {3}",
+                        user.Mention,
+                        splitString[0] == "" ? "" : string.Concat("`", splitString[0], "`"),
+                        u.Mention,
+                        splitString[1] == "" ? "" : string.Concat("`", splitString[1], "`")));
+                }
+                else
+                {
+                    await channel.SendMessageAsync($"{user.Mention}, Automated reminder: `{msg}`");
+                }
+            }
             t.Interval = time * 1000;
             t.Elapsed += handler;
             t.Start();

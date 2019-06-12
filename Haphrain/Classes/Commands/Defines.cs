@@ -1,12 +1,7 @@
 ﻿using Discord.Commands;
 using System;
 using System.IO;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
-using System.Xml;
-using unirest;
 using Haphrain.Classes.Data;
 using Newtonsoft.Json;
 using System.Diagnostics;
