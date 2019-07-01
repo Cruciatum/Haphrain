@@ -30,7 +30,7 @@ namespace Haphrain.Classes.Commands
             time = time.ToLower();
             if (Regex.Match(time, @"^\d+[dhms]$").Success)
             {
-                int i = time.Contains('d') ? time.IndexOf('d') : time.Contains('h') ? time.IndexOf('h') : time.Contains('m') ? time.IndexOf('m') : time.IndexOf('s');
+                int i = time.Contains('d') ? time.IndexOf('d') : (time.Contains('h') ? time.IndexOf('h') : (time.Contains('m') ? time.IndexOf('m') : time.IndexOf('s')));
                 string code = "";
                 ulong multiplier = 1;
                 switch (time.Substring(i, 1))
@@ -64,12 +64,12 @@ namespace Haphrain.Classes.Commands
                                 splitString[0] == "" ? "" : string.Concat("`", splitString[0], "`"),
                                 user.Mention,
                                 splitString[1] == "" ? "" : string.Concat("`", splitString[1], "`")));
-                            await TimerStart(t * multiplier, Context.Channel, Context.User, fullMessage, user, mentionString);
+                            await TimerStart(t, Context.Channel, Context.User, fullMessage, user, mentionString);
                         }
                         else
                         {
                             await Context.Channel.SendMessageAsync($"{Context.User.Mention}, In {(t / multiplier).ToString()} {code} I will remind you of your message. `{fullMessage}`");
-                            await TimerStart(t * multiplier, Context.Channel, Context.User, fullMessage);
+                            await TimerStart(t, Context.Channel, Context.User, fullMessage);
                         }
 
                     }
