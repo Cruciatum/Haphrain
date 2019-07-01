@@ -30,14 +30,14 @@ namespace Haphrain
         {
             Client = new DiscordSocketClient(new DiscordSocketConfig
             {
-                LogLevel = LogSeverity.Debug
+                LogLevel = GuildsFileLoc.Contains("Live") ? LogSeverity.Warning : LogSeverity.Debug
             });
 
             Commands = new CommandService(new CommandServiceConfig
             {
                 CaseSensitiveCommands = false,
                 DefaultRunMode = RunMode.Async,
-                LogLevel = LogSeverity.Debug
+                LogLevel = GuildsFileLoc.Contains("Live") ? LogSeverity.Warning : LogSeverity.Debug
             });
 
             Provider = new ServiceCollection()
@@ -220,8 +220,12 @@ namespace Haphrain
             var channel = client.GetChannel(logChannelID) as IMessageChannel;
             foreach (Embed e in embeds)
             {
-
-                await channel.SendMessageAsync($"From: {msg.Author} in {msg.Channel} - ", false, e);
+                if (e.Type == EmbedType.Gifv || e.Type==EmbedType.Image)
+                {
+                    EmbedBuilder t = new EmbedBuilder();
+                    t.ImageUrl = e.Url;
+                    await channel.SendMessageAsync($"From: {msg.Author.Mention} in {MentionUtils.MentionChannel(msg.Channel.Id)}\nURL: {msg.GetJumpUrl()}", false, t.Build());
+                }
             }
         }
 
@@ -255,9 +259,9 @@ namespace Haphrain
                     }
                 }
                 if (msg.Content == "")
-                    await channel.SendFileAsync(file, $"From: {msg.Author.Mention} in {MentionUtils.MentionChannel(msg.Channel.Id)}");
+                    await channel.SendFileAsync(file, $"From: {msg.Author.Mention} in {MentionUtils.MentionChannel(msg.Channel.Id)}\nURL: {msg.GetJumpUrl()}");
                 else
-                    await channel.SendFileAsync(file, $"From: {msg.Author.Mention} in {MentionUtils.MentionChannel(msg.Channel.Id)}\n Included message: {msg.Content}");
+                    await channel.SendFileAsync(file, $"From: {msg.Author.Mention} in {MentionUtils.MentionChannel(msg.Channel.Id)}\nIncluded message: {msg.Content}\nURL: {msg.GetJumpUrl()}");
                 File.Delete(file);
             }
         }
