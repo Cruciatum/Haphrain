@@ -12,5 +12,13 @@ namespace Haphrain.Classes.Commands
 
             return t;
         }
+        internal static Timer StartTimer(this Timer t, ElapsedEventHandler handler, int interval)
+        {
+            t.Interval = interval;
+            t.Elapsed += handler;
+            t.Enabled = true;
+
+            return t;
+        }
     }
 }
