@@ -71,12 +71,12 @@ namespace Haphrain.Classes.Commands
                                 splitString[0] == "" ? "" : string.Concat("`", splitString[0], "`"),
                                 user.Mention,
                                 splitString[1] == "" ? "" : string.Concat("`", splitString[1], "`")));
-                            await TimerStart(t, Context.Channel, Context.User, fullMessage, user, mentionString);
+                            TimerStart(t, Context.Channel, Context.User, fullMessage, user, mentionString);
                         }
                         else
                         {
                             await Context.Channel.SendMessageAsync($"{Context.User.Mention}, In {(t / multiplier).ToString()} {code} I will remind you of your message. `{fullMessage}`");
-                            await TimerStart(t, Context.Channel, Context.User, fullMessage);
+                            TimerStart(t, Context.Channel, Context.User, fullMessage);
                         }
 
                     }
@@ -92,7 +92,7 @@ namespace Haphrain.Classes.Commands
             }
         }
 
-        private async Task TimerStart(ulong time, ISocketMessageChannel channel, SocketUser user, string msg, IUser u = null, string mentionString = "")
+        private void TimerStart(ulong time, ISocketMessageChannel channel, SocketUser user, string msg, IUser u = null, string mentionString = "")
         {
             Timer t = new Timer();
             async void handler(object sender, ElapsedEventArgs e)
@@ -114,9 +114,7 @@ namespace Haphrain.Classes.Commands
                     await channel.SendMessageAsync($"{user.Mention}, Automated reminder: `{msg}`");
                 }
             }
-            t.Interval = time * 1000;
-            t.Elapsed += handler;
-            t.Start();
+            t.StartTimer(handler,time*1000);
         }
     }
 

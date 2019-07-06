@@ -6,7 +6,9 @@ using System.Timers;
 using System.Xml;
 using Discord;
 using Discord.Commands;
+using Discord.Rest;
 using Discord.WebSocket;
+using Haphrain.Classes.HelperObjects;
 
 namespace Haphrain.Classes.Commands
 {
@@ -76,12 +78,57 @@ namespace Haphrain.Classes.Commands
             }
         }
 
-        [Command("setup"), Summary("Show settings for this server"), Priority(0)]
+        [Command("setup"), Summary("Show settings for this server"), Priority(0), RequireUserPermission(GuildPermission.Administrator)]
         public async Task ServerSettings()
         {
+            Options guildOptions = new Options();
+            GlobalVars.GuildsFile.Load(GlobalVars.GuildsFileLoc);
+            var guildNode = GlobalVars.GuildsFile.SelectSingleNode($"/Guilds/Guild[@GuildID='{Context.Guild.Id}']");
+            var prefixNode = guildNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "Prefix");
+            var optionsNode = guildNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "Options");
+            guildOptions.LogEmbeds = (optionsNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "LogEmbeds").InnerText == "0") ? false : true;
+            guildOptions.LogAttachments = (optionsNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "LogAttachments").InnerText == "0") ? false : true;
+
+
             EmbedBuilder builder = new EmbedBuilder();
-            //Create an embed with all the listed settings
-            //Add reactions in order to toggle specific settings on/off
+            builder.Title = "Server settings";
+            builder.AddField("\u0031\u20E3 Log Embedded messages", $"Currently:{(guildOptions.LogEmbeds ? "True" : "False")}");
+            builder.AddField("\u0032\u20E3 Log Attached files", $"Currently:{(guildOptions.LogAttachments ? "True" : "False")}");
+        
+            RestUserMessage msg = await Context.Channel.SendMessageAsync(null, false, builder.Build());
+            GlobalVars.AddSettingsTracker(msg, Context.Message.Author.Id);
+            await msg.AddReactionsAsync(new Emoji[] { new Emoji("\u0031\u20E3"), new Emoji("\u0032\u20E3") });
+        }
+
+        [Command("set"), Summary("View available settings"), RequireUserPermission(GuildPermission.Administrator)]
+        public async Task GetSets()
+        {
+            EmbedBuilder b = new EmbedBuilder();
+            b.Title = "Available options:";
+            b.AddField("set LogChannel", "Use in a channel to have logs appear in there");
+
+            await Context.Channel.SendMessageAsync(null, false, b.Build());
+        }
+
+        [Command("set logchannel"), Alias("set lc"), Summary("Setup the channel for logging stuff"), RequireUserPermission(GuildPermission.Administrator)]
+        public async Task SetupLogChannel()
+        {
+            XmlDocument doc = new XmlDocument();
+            doc.Load(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.1", @"Data\Guilds.xml"));
+            var guildNode = doc.SelectSingleNode($"/Guilds/Guild[@GuildID='{Context.Guild.Id}']");
+            var optionsNode = guildNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "Options");
+            var channelNode = optionsNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "LogChannelID");
+            RestUserMessage msg;
+            if (channelNode.InnerText == "0")
+            {
+                msg = await Context.Channel.SendMessageAsync($"{Context.User.Mention}: Do you wish this channel to be used for logging?");
+            }
+            else
+            {
+                msg = await Context.Channel.SendMessageAsync($"{Context.User.Mention}: Do you wish to change the logging channel from {MentionUtils.MentionChannel(ulong.Parse(channelNode.InnerText))} to {MentionUtils.MentionChannel(Context.Channel.Id)}?");
+            }
+            GlobalVars.AddLogChannelTracker(msg, Context.Message.Author.Id);
+            await msg.AddReactionsAsync(new Emoji[] { new Emoji("✅"), new Emoji("🚫") });
         }
     }
 }

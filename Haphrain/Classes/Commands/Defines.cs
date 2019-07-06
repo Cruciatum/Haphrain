@@ -4,7 +4,6 @@ using System.IO;
 using System.Threading.Tasks;
 using Haphrain.Classes.Data;
 using Newtonsoft.Json;
-using System.Diagnostics;
 using System.Net;
 using Haphrain.Classes.JsonObjects;
 using Discord;

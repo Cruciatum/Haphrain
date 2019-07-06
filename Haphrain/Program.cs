@@ -26,8 +26,6 @@ namespace Haphrain
         private DiscordSocketClient Client;
         private CommandService Commands;
         private IServiceProvider Provider;
-        private XmlDocument GuildsFile = new XmlDocument();
-        private readonly string GuildsFileLoc = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.1", @"Data\Guilds.xml");
         private string GfyCatCredential = "";
         private static readonly HttpClient httpClient = new HttpClient();
 
@@ -37,14 +35,14 @@ namespace Haphrain
         {
             Client = new DiscordSocketClient(new DiscordSocketConfig
             {
-                LogLevel = GuildsFileLoc.Contains("Live") ? LogSeverity.Warning : LogSeverity.Debug
+                LogLevel = GlobalVars.GuildsFileLoc.Contains("Live") ? LogSeverity.Warning : LogSeverity.Debug
             });
 
             Commands = new CommandService(new CommandServiceConfig
             {
                 CaseSensitiveCommands = false,
                 DefaultRunMode = RunMode.Async,
-                LogLevel = GuildsFileLoc.Contains("Live") ? LogSeverity.Warning : LogSeverity.Debug
+                LogLevel = GlobalVars.GuildsFileLoc.Contains("Live") ? LogSeverity.Warning : LogSeverity.Debug
             });
 
             Provider = new ServiceCollection()
@@ -59,6 +57,7 @@ namespace Haphrain
             Client.Log += Client_Log;
             Client.JoinedGuild += Client_JoinedGuild;
             Client.LeftGuild += Client_LeftGuild;
+            Client.ReactionAdded += Client_ReactionAdded;
 
             string Token = "";
             using (var s = new FileStream((Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)).Replace(@"bin\Debug\netcoreapp2.1", @"Data\Token.txt"), FileMode.Open, FileAccess.Read))
@@ -76,13 +75,79 @@ namespace Haphrain
             await Task.Delay(-1);
         }
 
+        private async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel channel, SocketReaction reaction)
+        {
+            var tMsg = GlobalVars.TrackedLogChannelMessages.SingleOrDefault(m => m.SourceMessage.Id == reaction.MessageId && m.TriggerById == reaction.UserId);
+            var guildID = ((SocketGuildChannel)channel).Guild.Id;
+            if (tMsg != null)
+            {
+                XmlDocument doc = new XmlDocument();
+                doc.Load(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.1", @"Data\Guilds.xml"));
+                var guildNode = doc.SelectSingleNode($"/Guilds/Guild[@GuildID='{guildID}']");
+                var optionsNode = guildNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "Options");
+                var channelNode = optionsNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "LogChannelID");
+                if (reaction.Emote.Name == "✅")
+                {
+                    await reaction.Channel.SendMessageAsync($"{reaction.User.Value.Mention}: This channel ({MentionUtils.MentionChannel(channel.Id)}) is now your log channel.");
+                    //Change channel topic
+                    channelNode.InnerText = channel.Id.ToString();
+                    doc.Save(GlobalVars.GuildsFileLoc);
+                }
+                else if (reaction.Emote.Name == "🚫")
+                {
+                    if (channelNode.InnerText == "0")
+                        await reaction.Channel.SendMessageAsync($"{reaction.User.Value.Mention}: Please make a channel for logging and run the command again there.");
+                    else
+                        await reaction.Channel.SendMessageAsync($"Logging channel has not been changed.");
+                }
+            }
+            else
+            {
+                tMsg = GlobalVars.TrackedSettingsMessages.SingleOrDefault(m => m.SourceMessage.Id == reaction.MessageId && m.TriggerById == reaction.UserId);
+                if (tMsg != null)
+                {
+                    Options guildOptions = new Options();
+                    GlobalVars.GuildsFile.Load(GlobalVars.GuildsFileLoc);
+                    var guildNode = GlobalVars.GuildsFile.SelectSingleNode($"/Guilds/Guild[@GuildID='{guildID}']");
+                    var prefixNode = guildNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "Prefix");
+                    var optionsNode = guildNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "Options");
+                    guildOptions.LogEmbeds = (optionsNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "LogEmbeds").InnerText == "0") ? false : true;
+                    guildOptions.LogAttachments = (optionsNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "LogAttachments").InnerText == "0") ? false : true;
+                    if (reaction.Emote.Name == "\u0031\u20E3")
+                    {
+                        optionsNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "LogEmbeds").InnerText = guildOptions.LogEmbeds ? "0" : "1";
+                        if (!guildOptions.LogEmbeds)
+                        {
+                            await channel.SendMessageAsync("Now logging messages with embeds.");
+                        }
+                        else await channel.SendMessageAsync("No longer logging messages with embeds.");
+                    }
+                    else if (reaction.Emote.Name == "\u0032\u20E3")
+                    {
+                        optionsNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "LogAttachments").InnerText = guildOptions.LogAttachments ? "0" : "1";
+                        if (!guildOptions.LogAttachments)
+                        {
+                            await channel.SendMessageAsync("Now logging messages with attachments.");
+                        }
+                        else await channel.SendMessageAsync("No longer logging messages with attachments.");
+                    }
+                    GlobalVars.GuildsFile.Save(GlobalVars.GuildsFileLoc);
+                }
+                else
+                {
+                    //Check other trackings
+                }
+            }
+            if (tMsg != null) await GlobalVars.UntrackMessage(tMsg);
+        }
+
         private async Task CheckGuildsStartup()
         {
-            GuildsFile.Load(GuildsFileLoc);
-            var root = GuildsFile.DocumentElement;
+            GlobalVars.GuildsFile.Load(GlobalVars.GuildsFileLoc);
+            var root = GlobalVars.GuildsFile.DocumentElement;
             foreach (SocketGuild g in Client.Guilds)
             {
-                if (GuildsFile.SelectSingleNode($"/Guilds/Guild[@GuildID='{g.Id}']") == null)
+                if (GlobalVars.GuildsFile.SelectSingleNode($"/Guilds/Guild[@GuildID='{g.Id}']") == null)
                 {
                     await Client_JoinedGuild(g);
                 }
@@ -93,13 +158,13 @@ namespace Haphrain
         {
             Console.WriteLine($"{DateTime.Now} -> Left guild: {arg.Id}");
 
-            GuildsFile.Load(GuildsFileLoc);
-            var root = GuildsFile.DocumentElement;
-            var guildNode = GuildsFile.SelectSingleNode($"/Guilds/Guild[@GuildID='{arg.Id}']");
+            GlobalVars.GuildsFile.Load(GlobalVars.GuildsFileLoc);
+            var root = GlobalVars.GuildsFile.DocumentElement;
+            var guildNode = GlobalVars.GuildsFile.SelectSingleNode($"/Guilds/Guild[@GuildID='{arg.Id}']");
 
             root.RemoveChild(guildNode);
 
-            GuildsFile.Save(GuildsFileLoc);
+            GlobalVars.GuildsFile.Save(GlobalVars.GuildsFileLoc);
 
             await UpdateActivity();
             await Task.Delay(100);
@@ -110,20 +175,20 @@ namespace Haphrain
         {
             Console.WriteLine($"{DateTime.Now} -> Joined guild: {arg.Id}");
 
-            GuildsFile.Load(GuildsFileLoc);
+            GlobalVars.GuildsFile.Load(GlobalVars.GuildsFileLoc);
             //add new guildobject to Guilds file
-            var root = GuildsFile.DocumentElement;
+            var root = GlobalVars.GuildsFile.DocumentElement;
 
-            var guildNode = GuildsFile.CreateElement("Guild");
-            var guildID = GuildsFile.CreateAttribute("GuildID");
-            var prefixNode = GuildsFile.CreateElement("Prefix");
-            var nameNode = GuildsFile.CreateElement("GuildName");
-            var ownerID = GuildsFile.CreateElement("OwnerID");
-            var optionsNode = GuildsFile.CreateElement("Options");
-            var optionLogEmbed = optionsNode.AppendChild(GuildsFile.CreateElement("LogEmbeds")).InnerText = "0";
-            var optionLogAttachments = optionsNode.AppendChild(GuildsFile.CreateElement("LogAttachments")).InnerText = "0";
+            var guildNode = GlobalVars.GuildsFile.CreateElement("Guild");
+            var guildID = GlobalVars.GuildsFile.CreateAttribute("GuildID");
+            var prefixNode = GlobalVars.GuildsFile.CreateElement("Prefix");
+            var nameNode = GlobalVars.GuildsFile.CreateElement("GuildName");
+            var ownerID = GlobalVars.GuildsFile.CreateElement("OwnerID");
+            var optionsNode = GlobalVars.GuildsFile.CreateElement("Options");
+            var optionLogEmbed = optionsNode.AppendChild(GlobalVars.GuildsFile.CreateElement("LogEmbeds")).InnerText = "0";
+            var optionLogAttachments = optionsNode.AppendChild(GlobalVars.GuildsFile.CreateElement("LogAttachments")).InnerText = "0";
 
-            var optionLogChannelID = optionsNode.AppendChild(GuildsFile.CreateElement("LogChannelID")).InnerText = "0";
+            var optionLogChannelID = optionsNode.AppendChild(GlobalVars.GuildsFile.CreateElement("LogChannelID")).InnerText = "0";
 
             guildID.Value = arg.Id.ToString();
             guildNode.Attributes.Append(guildID);
@@ -141,7 +206,7 @@ namespace Haphrain
 
             root.AppendChild(guildNode);
 
-            GuildsFile.Save(GuildsFileLoc);
+            GlobalVars.GuildsFile.Save(GlobalVars.GuildsFileLoc);
 
             await UpdateActivity();
             await Task.Delay(100);
@@ -149,7 +214,7 @@ namespace Haphrain
 
         private async Task Client_Log(LogMessage arg)
         {
-            if (GuildsFileLoc.Contains("Live"))
+            if (GlobalVars.GuildsFileLoc.Contains("Live"))
             {
                 if (arg.Severity < LogSeverity.Debug)
                 {
@@ -197,8 +262,8 @@ namespace Haphrain
             int argPos = 0;
             string guildPrefix = "]";
 
-            GuildsFile.Load(GuildsFileLoc);
-            var guildNode = GuildsFile.SelectSingleNode($"/Guilds/Guild[@GuildID='{context.Guild.Id}']");
+            GlobalVars.GuildsFile.Load(GlobalVars.GuildsFileLoc);
+            var guildNode = GlobalVars.GuildsFile.SelectSingleNode($"/Guilds/Guild[@GuildID='{context.Guild.Id}']");
             var prefixNode = guildNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "Prefix");
             var optionsNode = guildNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "Options");
             guildOptions.LogEmbeds = (optionsNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "LogEmbeds").InnerText == "0") ? false : true;
