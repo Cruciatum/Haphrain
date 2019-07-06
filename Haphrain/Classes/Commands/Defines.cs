@@ -49,7 +49,9 @@ namespace Haphrain.Classes.Commands
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
+                await LogWriter.WriteLogFile($"ERROR: Exception thrown : {ex.Message}");
+                await LogWriter.WriteLogFile($"{ex.StackTrace}");
+                Console.WriteLine($"Exception: {ex.Message}");
             }
 
             if (oxfLemma.Results != null){
@@ -81,7 +83,9 @@ namespace Haphrain.Classes.Commands
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex.ToString());
+                    await LogWriter.WriteLogFile($"ERROR: Exception thrown : {ex.Message}");
+                    await LogWriter.WriteLogFile($"{ex.StackTrace}");
+                    Console.WriteLine($"Exception: {ex.Message}");
                 }
             }
 
@@ -137,7 +141,10 @@ namespace Haphrain.Classes.Commands
             }
             catch (Exception ex)
             {
-                Debug.Print(ex.Message);
+                await LogWriter.WriteLogFile($"ERROR: Exception thrown : {ex.Message}");
+                await LogWriter.WriteLogFile($"{ex.StackTrace}");
+                Console.WriteLine($"Exception: {ex.Message}");
+                throw ex;
             }
 
             if (builder.Fields.Count == 0) { builder.AddField($"{string.Join(' ', term)}", "No good definitions found"); }

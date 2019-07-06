@@ -7,6 +7,7 @@ using Discord.WebSocket;
 using Discord;
 using System.Collections.Generic;
 using System.Linq;
+using Haphrain.Classes.Data;
 
 namespace Haphrain.Classes.Commands
 {
@@ -24,7 +25,13 @@ namespace Haphrain.Classes.Commands
             foreach (string s in msg)
             {
                 try { user = await CustomUserTypereader.GetUserFromString(s, Context.Guild); mentionString = s; hasMention = true; }
-                catch { /*No mention was found*/ }
+                catch (Exception ex)
+                {
+                    await LogWriter.WriteLogFile($"ERROR: Exception thrown : {ex.Message}");
+                    await LogWriter.WriteLogFile($"{ex.StackTrace}");
+                    Console.WriteLine($"Exception: {ex.Message}");
+                    throw ex;
+                }
             }
 
             time = time.ToLower();
@@ -127,9 +134,12 @@ namespace Haphrain.Classes.Commands
                 ulong id = ulong.Parse(idStr);
                 return await server.GetUserAsync(id);
             }
-            catch
+            catch (Exception ex)
             {
-                throw new Exception("Could not parse User ID.");
+                await LogWriter.WriteLogFile($"ERROR: Exception thrown : {ex.Message}");
+                await LogWriter.WriteLogFile($"{ex.StackTrace}");
+                Console.WriteLine($"Exception: {ex.Message}");
+                throw ex;
             }
         }
     }

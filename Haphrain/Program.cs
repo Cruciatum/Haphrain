@@ -3,7 +3,6 @@ using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Xml;
-using System.Xml.Linq;
 
 using Discord;
 using Discord.WebSocket;
@@ -19,7 +18,6 @@ using Haphrain.Classes.JsonObjects;
 using System.Timers;
 using Haphrain.Classes.Commands;
 using System.Net.Http;
-using System.Collections.Generic;
 
 namespace Haphrain
 {
@@ -70,6 +68,8 @@ namespace Haphrain
                     Token = r.ReadToEnd();
                 }
             }
+            if (!Directory.Exists(LogWriter.LogFileLoc.Replace(@"Logs\Log",@"Logs\"))) Directory.CreateDirectory(LogWriter.LogFileLoc.Replace(@"Logs\Log", @"Logs\"));
+
             await Client.LoginAsync(TokenType.Bot, Token);
             await Client.StartAsync();
 
@@ -122,7 +122,7 @@ namespace Haphrain
             var optionsNode = GuildsFile.CreateElement("Options");
             var optionLogEmbed = optionsNode.AppendChild(GuildsFile.CreateElement("LogEmbeds")).InnerText = "0";
             var optionLogAttachments = optionsNode.AppendChild(GuildsFile.CreateElement("LogAttachments")).InnerText = "0";
-            
+
             var optionLogChannelID = optionsNode.AppendChild(GuildsFile.CreateElement("LogChannelID")).InnerText = "0";
 
             guildID.Value = arg.Id.ToString();
@@ -133,7 +133,7 @@ namespace Haphrain
 
             ownerID.InnerText = arg.Owner.Id.ToString();
             guildNode.AppendChild(ownerID);
-            
+
             prefixNode.InnerText = "]";
             guildNode.AppendChild(prefixNode);
 
@@ -149,14 +149,39 @@ namespace Haphrain
 
         private async Task Client_Log(LogMessage arg)
         {
-            Console.WriteLine($"{DateTime.Now} at {arg.Source} -> {arg.Message}");
+            if (GuildsFileLoc.Contains("Live"))
+            {
+                if (arg.Severity < LogSeverity.Debug)
+                {
+                    if (arg.Exception != null)
+                    {
+                        Console.WriteLine($"{arg.Severity.ToString().ToUpper()}: {DateTime.Now} Exception thrown: {arg.Exception.Source} -> {arg.Exception.Message}");
+                    }
+                    Console.WriteLine($"{arg.Severity.ToString().ToUpper()}: {DateTime.Now} at {arg.Source} -> {arg.Message}");
+                }
+                if (arg.Exception != null)
+                {
+                    await LogWriter.WriteLogFile($"{DateTime.Now} Exception thrown: {arg.Exception.Source} -> {arg.Exception.Message}");
+                }
+                await LogWriter.WriteLogFile($"{arg.Severity.ToString().ToUpper()}: {DateTime.Now} at {arg.Source} -> {arg.Message}");
+            }
+            else
+            {
+                if (arg.Exception != null)
+                {
+                    Console.WriteLine($"{arg.Severity.ToString().ToUpper()}: {DateTime.Now} Exception thrown: {arg.Exception.Source} -> {arg.Exception.Message}");
+                    await LogWriter.WriteLogFile($"{DateTime.Now} Exception thrown: {arg.Exception.Source} -> {arg.Exception.Message}");
+                }
+                Console.WriteLine($"{arg.Severity.ToString().ToUpper()}: {DateTime.Now} at {arg.Source} -> {arg.Message}");
+                await LogWriter.WriteLogFile($"{arg.Severity.ToString().ToUpper()}: {DateTime.Now} at {arg.Source} -> {arg.Message}");
+            }
         }
 
         private async Task Client_Ready()
         {
             await UpdateActivity();
             await CheckGuildsStartup();
-            Console.WriteLine("Bot ready!");
+            await Client_Log(new LogMessage(LogSeverity.Info, "Client_Ready", "Bot ready!"));
         }
 
         private async Task Client_MessageReceived(SocketMessage arg)
@@ -166,7 +191,7 @@ namespace Haphrain
 
             var context = new SocketCommandContext(Client, msg);
 
-            if ((context.Message == null || context.Message.Content == "") && arg.Attachments.Count == 0 && arg.Embeds.Count==0) return;
+            if ((context.Message == null || context.Message.Content == "") && arg.Attachments.Count == 0 && arg.Embeds.Count == 0) return;
             if (context.User.IsBot) return;
 
             int argPos = 0;
@@ -192,11 +217,20 @@ namespace Haphrain
 
             if (!(msg.HasStringPrefix(guildPrefix, ref argPos)) && !(msg.HasMentionPrefix(Client.CurrentUser, ref argPos))) return;
 
-            var Result = await Commands.ExecuteAsync(context, argPos, Provider);
-            if (!Result.IsSuccess)
+            IResult Result = null;
+            try
             {
-                Console.WriteLine($"{DateTime.Now} at Commands -> Something went wrong when executing a command.");
-                Console.WriteLine($"Command text: {context.Message.Content} |> Error: {Result.ErrorReason}");
+                Result = await Commands.ExecuteAsync(context, argPos, Provider);
+                if (!Result.IsSuccess)
+                {
+                    Console.WriteLine($"{DateTime.Now} at Commands -> Something went wrong when executing a command.");
+                    Console.WriteLine($"Command text: {context.Message.Content} |> Error: {Result.ErrorReason}");
+                    await Client_Log(new LogMessage(LogSeverity.Error, context.Message.Content, Result.ErrorReason));
+                }
+            }
+            catch (Exception ex)
+            {
+                await Client_Log(new LogMessage(LogSeverity.Critical, context.Message.Content, Result.ErrorReason, ex));
             }
         }
 
@@ -229,11 +263,11 @@ namespace Haphrain
             var channel = client.GetChannel(logChannelID) as IMessageChannel;
             foreach (Embed e in embeds)
             {
-                if (e.Type == EmbedType.Gifv || e.Type==EmbedType.Image)
+                if (e.Type == EmbedType.Gifv || e.Type == EmbedType.Image)
                 {
                     EmbedBuilder t = new EmbedBuilder();
-                    t.ImageUrl = e.Url.Contains("tenor") ? GetTenorGIF(e.Url)  : e.Url.Contains("gfycat") ? await GetGfyCatAsync(e.Url) : e.Url;
-                    await channel.SendMessageAsync($"From: {msg.Author.Mention} in {MentionUtils.MentionChannel(msg.Channel.Id)}\nURL: {msg.GetJumpUrl()}", false, t.Build());
+                    t.ImageUrl = e.Url.Contains("tenor") ? GetTenorGIF(e.Url) : e.Url.Contains("gfycat") ? GetGfyCatAsync(e.Url) : e.Url;
+                    await channel.SendMessageAsync($"From: {msg.Author.Mention}({msg.Author.Username}#{msg.Author.Discriminator}) in {MentionUtils.MentionChannel(msg.Channel.Id)}\nURL: {msg.GetJumpUrl()}", false, t.Build());
                 }
             }
         }
@@ -242,7 +276,7 @@ namespace Haphrain
         {
             Attachment[] attached = msg.Attachments.ToArray();
             var channel = client.GetChannel(logChannelID) as IMessageChannel;
-            string[] imgFileTypes = { ".jpg", ".jpeg", ".gif", ".png"};
+            string[] imgFileTypes = { ".jpg", ".jpeg", ".gif", ".png" };
             string path = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.1", @"Images");
 
             foreach (Attachment a in attached)
@@ -263,14 +297,14 @@ namespace Haphrain
                             File.Delete(file);
                         }
                         c.DownloadFile(a.Url, file);
-                        while (c.IsBusy) {}
+                        while (c.IsBusy) { }
 
                     }
                 }
                 if (msg.Content == "")
-                    await channel.SendFileAsync(file, $"From: {msg.Author.Mention} in {MentionUtils.MentionChannel(msg.Channel.Id)}\nURL: {msg.GetJumpUrl()}");
+                    await channel.SendFileAsync(file, $"From: {msg.Author.Mention}({msg.Author.Username}#{msg.Author.Discriminator}) in {MentionUtils.MentionChannel(msg.Channel.Id)}\nURL: {msg.GetJumpUrl()}");
                 else
-                    await channel.SendFileAsync(file, $"From: {msg.Author.Mention} in {MentionUtils.MentionChannel(msg.Channel.Id)}\nIncluded message: {msg.Content}\nURL: {msg.GetJumpUrl()}");
+                    await channel.SendFileAsync(file, $"From: {msg.Author.Mention}({msg.Author.Username}#{msg.Author.Discriminator}) in {MentionUtils.MentionChannel(msg.Channel.Id)}\nIncluded message: {msg.Content}\nURL: {msg.GetJumpUrl()}");
                 File.Delete(file);
             }
         }
@@ -278,7 +312,7 @@ namespace Haphrain
         private string GetTenorGIF(string url)
         {
             string gifURL = "";
-            string id = url.Remove(0, url.LastIndexOf('-')+1);
+            string id = url.Remove(0, url.LastIndexOf('-') + 1);
             string WEBSERVICE_URL = $"https://api.tenor.com/v1/gifs?key={Constants._TENORAPIKEY_}&ids={id}&media_filter=minimal";
             string jsonResponse;
             TenorResult obj = new TenorResult();
@@ -298,7 +332,7 @@ namespace Haphrain
                         {
                             jsonResponse = sr.ReadToEnd();
                             obj = JsonConvert.DeserializeObject<TenorResult>(jsonResponse);
-                            
+
                         }
                     }
                     gifURL = obj.results[0].media[0].gif.url;
@@ -312,10 +346,10 @@ namespace Haphrain
             return gifURL;
         }
 
-        private async Task<string> GetGfyCatAsync(string url)
+        private string GetGfyCatAsync(string url)
         {
             string gifURL = "";
-            string WEBSERVICE_URL = $"https://api.gfycat.com/v1/gfycats/{url.Replace("https://gfycat.com/","")}";
+            string WEBSERVICE_URL = $"https://api.gfycat.com/v1/gfycats/{url.Replace("https://gfycat.com/", "")}";
             if (WEBSERVICE_URL.Contains('-'))
             {
                 WEBSERVICE_URL = WEBSERVICE_URL.Substring(0, WEBSERVICE_URL.IndexOf('-'));
@@ -361,7 +395,7 @@ namespace Haphrain
                     t.Stop();
                     GfyCatCredential = "";
                 }
-                t.StartTimer(handler, resultObj.expires_in*1000);
+                t.StartTimer(handler, resultObj.expires_in * 1000);
             }
 
             headers.Add("Authorization", GfyCatCredential);
