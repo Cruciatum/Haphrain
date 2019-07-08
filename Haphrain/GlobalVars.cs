@@ -52,13 +52,20 @@ namespace Haphrain
         {
             if (TrackedLogChannelMessages.Contains(msg)) TrackedLogChannelMessages.Remove(msg);
             else if (TrackedSettingsMessages.Contains(msg)) TrackedSettingsMessages.Remove(msg);
-            await msg.SourceMessage.DeleteAsync();
+
+
+            if (!msg.IsDeleted)
+            {
+                await msg.SourceMessage.DeleteAsync();
+                msg.IsDeleted = true;
+            }
         }
     }
     internal class TrackedMessage
     {
         internal RestUserMessage SourceMessage { get; set; }
         internal ulong TriggerById { get; set; }
+        internal bool IsDeleted { get; set; }
 
         public TrackedMessage(RestUserMessage source, ulong triggerID)
         {

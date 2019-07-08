@@ -35,14 +35,14 @@ namespace Haphrain
         {
             Client = new DiscordSocketClient(new DiscordSocketConfig
             {
-                LogLevel = GlobalVars.GuildsFileLoc.Contains("Live") ? LogSeverity.Warning : LogSeverity.Debug
+                LogLevel = LogSeverity.Debug
             });
 
             Commands = new CommandService(new CommandServiceConfig
             {
                 CaseSensitiveCommands = false,
                 DefaultRunMode = RunMode.Async,
-                LogLevel = GlobalVars.GuildsFileLoc.Contains("Live") ? LogSeverity.Warning : LogSeverity.Debug
+                LogLevel = LogSeverity.Debug
             });
 
             Provider = new ServiceCollection()
@@ -67,7 +67,7 @@ namespace Haphrain
                     Token = r.ReadToEnd();
                 }
             }
-            if (!Directory.Exists(LogWriter.LogFileLoc.Replace(@"Logs\Log",@"Logs\"))) Directory.CreateDirectory(LogWriter.LogFileLoc.Replace(@"Logs\Log", @"Logs\"));
+            if (!Directory.Exists(LogWriter.LogFileLoc.Replace(@"Logs\Log", @"Logs\"))) Directory.CreateDirectory(LogWriter.LogFileLoc.Replace(@"Logs\Log", @"Logs\"));
 
             await Client.LoginAsync(TokenType.Bot, Token);
             await Client.StartAsync();
@@ -214,32 +214,19 @@ namespace Haphrain
 
         private async Task Client_Log(LogMessage arg)
         {
-            if (GlobalVars.GuildsFileLoc.Contains("Live"))
-            {
-                if (arg.Severity < LogSeverity.Debug)
-                {
-                    if (arg.Exception != null)
-                    {
-                        Console.WriteLine($"{arg.Severity.ToString().ToUpper()}: {DateTime.Now} Exception thrown: {arg.Exception.Source} -> {arg.Exception.Message}");
-                    }
-                    Console.WriteLine($"{arg.Severity.ToString().ToUpper()}: {DateTime.Now} at {arg.Source} -> {arg.Message}");
-                }
-                if (arg.Exception != null)
-                {
-                    await LogWriter.WriteLogFile($"{DateTime.Now} Exception thrown: {arg.Exception.Source} -> {arg.Exception.Message}");
-                }
-                await LogWriter.WriteLogFile($"{arg.Severity.ToString().ToUpper()}: {DateTime.Now} at {arg.Source} -> {arg.Message}");
-            }
-            else
+            if (arg.Severity <= (GlobalVars.GuildsFileLoc.Contains("Live") ? LogSeverity.Info : LogSeverity.Debug))
             {
                 if (arg.Exception != null)
                 {
-                    Console.WriteLine($"{arg.Severity.ToString().ToUpper()}: {DateTime.Now} Exception thrown: {arg.Exception.Source} -> {arg.Exception.Message}");
-                    await LogWriter.WriteLogFile($"{DateTime.Now} Exception thrown: {arg.Exception.Source} -> {arg.Exception.Message}");
+                    Console.WriteLine($"EXCEPTION [{arg.Severity.ToString()}]: {DateTime.Now} at {arg.Exception.Source} -> {arg.Exception.Message}");
                 }
-                Console.WriteLine($"{arg.Severity.ToString().ToUpper()}: {DateTime.Now} at {arg.Source} -> {arg.Message}");
-                await LogWriter.WriteLogFile($"{arg.Severity.ToString().ToUpper()}: {DateTime.Now} at {arg.Source} -> {arg.Message}");
+                Console.WriteLine($"[{arg.Severity.ToString().ToUpper()}]: {DateTime.Now} at {arg.Source} -> {arg.Message}");
             }
+            if (arg.Exception != null)
+            {
+                await LogWriter.WriteLogFile($"EXCEPTION [{arg.Severity.ToString()}]: {DateTime.Now} {arg.Exception.Source} -> {arg.Exception.Message}");
+            }
+            await LogWriter.WriteLogFile($"[{arg.Severity.ToString().ToUpper()}]: {DateTime.Now} at {arg.Source} -> {arg.Message}");
         }
 
         private async Task Client_Ready()
