@@ -20,7 +20,8 @@ namespace Haphrain
         internal static XmlDocument GuildsFile { get; set; } = new XmlDocument();
 
         internal static List<TrackedMessage> TrackedLogChannelMessages { get; set; } = new List<TrackedMessage>(); //For changing log channel
-        internal static List<TrackedMessage> TrackedSettingsMessages { get; set; } = new List<TrackedMessage>();
+        internal static List<TrackedMessage> TrackedSettingsMessages { get; set; } = new List<TrackedMessage>(); //For changing settings
+        internal static List<TrackedMessage> RandomMessages { get; set; } = new List<TrackedMessage>(); //For Random other stuff including error messages
 
         internal static void AddLogChannelTracker(RestUserMessage msg, ulong authorID)
         {
@@ -57,14 +58,15 @@ namespace Haphrain
                 t.Stop();
                 await UntrackMessage(tMsg);
             }
-            t.StartTimer(handler, 60000);
-            TrackedSettingsMessages.Add(tMsg);
+            t.StartTimer(handler, 15000);
+            RandomMessages.Add(tMsg);
         }
 
         internal static async Task UntrackMessage(TrackedMessage msg)
         {
             if (TrackedLogChannelMessages.Contains(msg)) TrackedLogChannelMessages.Remove(msg);
             else if (TrackedSettingsMessages.Contains(msg)) TrackedSettingsMessages.Remove(msg);
+            else if (RandomMessages.Contains(msg)) RandomMessages.Remove(msg);
 
 
             if (!msg.IsDeleted)

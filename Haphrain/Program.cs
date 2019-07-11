@@ -238,6 +238,7 @@ namespace Haphrain
         private async Task Client_MessageReceived(SocketMessage arg)
         {
             var msg = arg as SocketUserMessage;
+            if (msg.Content.Length <= 1) return;
             var guildOptions = new Options();
 
             var context = new SocketCommandContext(Client, msg);
@@ -274,9 +275,14 @@ namespace Haphrain
                 Result = await Commands.ExecuteAsync(context, argPos, Provider);
                 if (!Result.IsSuccess)
                 {
-                    Console.WriteLine($"{DateTime.Now} at Commands -> Something went wrong when executing a command.");
-                    Console.WriteLine($"Command text: {context.Message.Content} |> Error: {Result.ErrorReason}");
-                    await Client_Log(new LogMessage(LogSeverity.Error, context.Message.Content, Result.ErrorReason));
+                    if (Result.ErrorReason.ToLower().Contains("unknown command"))
+                    {
+                        await Client_Log(new LogMessage(LogSeverity.Error, "Client_MessageReceived", $"Unknown command sent by {context.Message.Author.ToString()} in guild: {context.Guild.Id} - Command text: {context.Message.Content}"));
+                        var errorMsg = await context.Channel.SendMessageAsync($"Sorry, I don't know what I'm supposed to do with that...");
+                        GlobalVars.AddRandomTracker(errorMsg);
+                    }
+                    else
+                        await Client_Log(new LogMessage(LogSeverity.Error, "Client_MessageReceived", $"Command text: {context.Message.Content} | Error: {Result.ErrorReason}"));
                 }
             }
             catch (Exception ex)
