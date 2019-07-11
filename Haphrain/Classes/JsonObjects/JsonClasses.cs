@@ -230,4 +230,8 @@ namespace Haphrain.Classes.JsonObjects
         public object[] DomainWhitelist { get; set; }
     }
     #endregion
+
+    #region Imgur Types
+    //Types from Imgur API here
+    #endregion
 }

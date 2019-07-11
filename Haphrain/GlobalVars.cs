@@ -48,6 +48,19 @@ namespace Haphrain
             TrackedSettingsMessages.Add(tMsg);
         }
 
+        internal static void AddRandomTracker(RestUserMessage msg)
+        {
+            var tMsg = new TrackedMessage(msg, 0);
+            Timer t = new Timer();
+            async void handler(object sender, ElapsedEventArgs e)
+            {
+                t.Stop();
+                await UntrackMessage(tMsg);
+            }
+            t.StartTimer(handler, 60000);
+            TrackedSettingsMessages.Add(tMsg);
+        }
+
         internal static async Task UntrackMessage(TrackedMessage msg)
         {
             if (TrackedLogChannelMessages.Contains(msg)) TrackedLogChannelMessages.Remove(msg);
@@ -61,6 +74,7 @@ namespace Haphrain
             }
         }
     }
+
     internal class TrackedMessage
     {
         internal RestUserMessage SourceMessage { get; set; }

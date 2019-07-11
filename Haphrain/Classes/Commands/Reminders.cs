@@ -25,12 +25,9 @@ namespace Haphrain.Classes.Commands
             foreach (string s in msg)
             {
                 try { user = await CustomUserTypereader.GetUserFromString(s, Context.Guild); mentionString = s; hasMention = true; }
-                catch (Exception ex)
+                catch
                 {
-                    await LogWriter.WriteLogFile($"ERROR: Exception thrown : {ex.Message}");
-                    await LogWriter.WriteLogFile($"{ex.StackTrace}");
-                    Console.WriteLine($"Exception: {ex.Message}");
-                    throw ex;
+                    //No Mention found
                 }
             }
 

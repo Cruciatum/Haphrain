@@ -26,7 +26,6 @@ namespace Haphrain
         private DiscordSocketClient Client;
         private CommandService Commands;
         private IServiceProvider Provider;
-        private string GfyCatCredential = "";
         private static readonly HttpClient httpClient = new HttpClient();
 
         static void Main(string[] args) => new Program().MainAsync().GetAwaiter().GetResult();
@@ -260,9 +259,9 @@ namespace Haphrain
             if (guildOptions.LogChannelID != 0)
             {
                 if (guildOptions.LogEmbeds)
-                    if (msg.Embeds.Count > 0) { await LogEmbed(msg, guildOptions.LogChannelID, Client); }
+                    if (msg.Embeds.Count > 0) { await ImageLogger.LogEmbed(msg, guildOptions.LogChannelID, Client); }
                 if (guildOptions.LogAttachments)
-                    if (msg.Attachments.Count > 0) { await LogAttachment(msg, guildOptions.LogChannelID, Client); }
+                    if (msg.Attachments.Count > 0) { await ImageLogger.LogAttachment(msg, guildOptions.LogChannelID, Client); }
             }
 
             if (prefixNode != null) guildPrefix = prefixNode.InnerText;
@@ -307,180 +306,6 @@ namespace Haphrain
 
             activity = activity.Replace("{serverCount}", Client.Guilds.Count.ToString());
             await Client.SetGameAsync($"{activity} {version}");
-        }
-
-        private async Task LogEmbed(SocketMessage msg, ulong logChannelID, DiscordSocketClient client)
-        {
-            Embed[] embeds = msg.Embeds.ToArray();
-            var channel = client.GetChannel(logChannelID) as IMessageChannel;
-            foreach (Embed e in embeds)
-            {
-                if (e.Type == EmbedType.Gifv || e.Type == EmbedType.Image)
-                {
-                    EmbedBuilder t = new EmbedBuilder();
-                    t.ImageUrl = e.Url.Contains("tenor") ? GetTenorGIF(e.Url) : e.Url.Contains("gfycat") ? GetGfyCatAsync(e.Url) : e.Url;
-                    await channel.SendMessageAsync($"From: {msg.Author.Mention}({msg.Author.Username}#{msg.Author.Discriminator}) in {MentionUtils.MentionChannel(msg.Channel.Id)}\nURL: {msg.GetJumpUrl()}", false, t.Build());
-                }
-            }
-        }
-
-        private async Task LogAttachment(SocketMessage msg, ulong logChannelID, DiscordSocketClient client)
-        {
-            Attachment[] attached = msg.Attachments.ToArray();
-            var channel = client.GetChannel(logChannelID) as IMessageChannel;
-            string[] imgFileTypes = { ".jpg", ".jpeg", ".gif", ".png" };
-            string path = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.1", @"Images");
-
-            foreach (Attachment a in attached)
-            {
-                string file = path + "\\" + a.Filename;
-                string ext = Path.GetExtension(a.Url);
-                if (imgFileTypes.Contains(ext.ToLower()))
-                {
-                    if (!Directory.Exists(path))
-                    {
-                        Directory.CreateDirectory(path);
-                    }
-
-                    using (var c = new WebClient())
-                    {
-                        if (File.Exists(file))
-                        {
-                            File.Delete(file);
-                        }
-                        c.DownloadFile(a.Url, file);
-                        while (c.IsBusy) { }
-
-                    }
-                }
-                if (msg.Content == "")
-                    await channel.SendFileAsync(file, $"From: {msg.Author.Mention}({msg.Author.Username}#{msg.Author.Discriminator}) in {MentionUtils.MentionChannel(msg.Channel.Id)}\nURL: {msg.GetJumpUrl()}");
-                else
-                    await channel.SendFileAsync(file, $"From: {msg.Author.Mention}({msg.Author.Username}#{msg.Author.Discriminator}) in {MentionUtils.MentionChannel(msg.Channel.Id)}\nIncluded message: {msg.Content}\nURL: {msg.GetJumpUrl()}");
-                File.Delete(file);
-            }
-        }
-
-        private string GetTenorGIF(string url)
-        {
-            string gifURL = "";
-            string id = url.Remove(0, url.LastIndexOf('-') + 1);
-            string WEBSERVICE_URL = $"https://api.tenor.com/v1/gifs?key={Constants._TENORAPIKEY_}&ids={id}&media_filter=minimal";
-            string jsonResponse;
-            TenorResult obj = new TenorResult();
-
-            try
-            {
-                var webRequest = WebRequest.Create(WEBSERVICE_URL);
-                if (webRequest != null)
-                {
-                    webRequest.Method = "GET";
-                    webRequest.Timeout = 12000;
-                    webRequest.ContentType = "application/json";
-
-                    using (Stream s = webRequest.GetResponse().GetResponseStream())
-                    {
-                        using (StreamReader sr = new StreamReader(s))
-                        {
-                            jsonResponse = sr.ReadToEnd();
-                            obj = JsonConvert.DeserializeObject<TenorResult>(jsonResponse);
-
-                        }
-                    }
-                    gifURL = obj.results[0].media[0].gif.url;
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.Print(ex.Message);
-            }
-
-            return gifURL;
-        }
-
-        private string GetGfyCatAsync(string url)
-        {
-            string gifURL = "";
-            string WEBSERVICE_URL = $"https://api.gfycat.com/v1/gfycats/{url.Replace("https://gfycat.com/", "")}";
-            if (WEBSERVICE_URL.Contains('-'))
-            {
-                WEBSERVICE_URL = WEBSERVICE_URL.Substring(0, WEBSERVICE_URL.IndexOf('-'));
-            }
-            string jsonResponse;
-            GfyCatResult obj = new GfyCatResult();
-            WebHeaderCollection headers = new WebHeaderCollection();
-            if (GfyCatCredential == "")
-            {
-                string grant_type = "client_credentials";
-                string authURL = "https://api.gfycat.com/v1/oauth/token";
-                var result = "";
-
-                var httpWebRequest = (HttpWebRequest)WebRequest.Create(authURL);
-                httpWebRequest.ContentType = "application/json";
-                httpWebRequest.Method = "POST";
-                GfyCatAuthPost postData = new GfyCatAuthPost
-                {
-                    grant_type = grant_type,
-                    client_id = Constants._GFYCATID_,
-                    client_secret = Constants._GFYCATSECRET_
-                };
-                using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
-                {
-                    string json = JsonConvert.SerializeObject(postData);
-
-                    streamWriter.Write(json);
-                }
-
-                var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
-                using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
-                {
-                    result = streamReader.ReadToEnd();
-                }
-
-                var resultObj = JsonConvert.DeserializeObject<GfyCatAuthResult>(result);
-
-                GfyCatCredential = "Bearer " + resultObj.access_token;
-
-                Timer t = new Timer();
-                void handler(object sender, ElapsedEventArgs e)
-                {
-                    t.Stop();
-                    GfyCatCredential = "";
-                }
-                t.StartTimer(handler, resultObj.expires_in * 1000);
-            }
-
-            headers.Add("Authorization", GfyCatCredential);
-
-            try
-            {
-                var webRequest = WebRequest.Create(WEBSERVICE_URL);
-                if (webRequest != null)
-                {
-                    webRequest.Method = "GET";
-                    webRequest.Headers = headers;
-                    webRequest.Timeout = 12000;
-                    webRequest.ContentType = "application/json";
-
-                    using (Stream s = webRequest.GetResponse().GetResponseStream())
-                    {
-                        using (StreamReader sr = new StreamReader(s))
-                        {
-                            jsonResponse = sr.ReadToEnd();
-                            obj = JsonConvert.DeserializeObject<GfyCatResult>(jsonResponse);
-                        }
-                    }
-
-                }
-
-                gifURL = obj.GfyItem.GifUrl;
-            }
-            catch (Exception ex)
-            {
-                Debug.Print(ex.Message);
-            }
-
-            return gifURL;
         }
     }
 }
