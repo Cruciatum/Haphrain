@@ -108,7 +108,20 @@ namespace Haphrain.Classes.Commands
             else await Context.Channel.SendMessageAsync(null, false, builder.Build());
         }
 
-        [Command("define urb"), Alias("def urb"), Summary("Gets the definition of the provided term from Urban Dictionary"), Priority(2), RequireNsfw(ErrorMessage = "Please use this in a channel marked NSFW.")]
+        [Command("define urb"), Alias("def urb"), Priority(2)]
+        public async Task SFWUrbDefine(params string[] term)
+        {
+            var c = (ITextChannel)Context.Channel;
+            RestUserMessage m;
+            if (!c.IsNsfw)
+            {
+                m = await Context.Channel.SendMessageAsync("Urban Dictionary is NSFW-only, defaulting to Oxford Dictionary.");
+                await OxfordDefine(term);
+                GlobalVars.AddRandomTracker(m);
+            }
+        }
+
+        [Command("define urb"), Alias("def urb"), Summary("Gets the definition of the provided term from Urban Dictionary"), Priority(3), RequireNsfw(ErrorMessage = "Please use this in a channel marked NSFW.")]
         public async Task UrbDefine(params string[] term)
         {
             string WEBSERVICE_URL = "http://api.urbandictionary.com/v0/define?result_type=exact&term=" + string.Join(' ', term);
