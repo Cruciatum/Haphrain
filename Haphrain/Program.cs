@@ -238,7 +238,7 @@ namespace Haphrain
         private async Task Client_MessageReceived(SocketMessage arg)
         {
             var msg = arg as SocketUserMessage;
-            if (msg.Content.Length <= 1) return;
+            if (msg.Content.Length <= 1 && msg.Embeds.Count == 0 && msg.Attachments.Count == 0) return;
             var guildOptions = new Options();
 
             var context = new SocketCommandContext(Client, msg);
