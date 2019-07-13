@@ -1,9 +1,11 @@
-﻿using Discord.Rest;
+﻿using Discord;
+using Discord.Rest;
 using Discord.WebSocket;
 using Haphrain.Classes.Commands;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -35,7 +37,6 @@ namespace Haphrain
             t.StartTimer(handler, 60000);
             TrackedLogChannelMessages.Add(tMsg);
         }
-
         internal static void AddSettingsTracker(RestUserMessage msg, ulong authorID)
         {
             var tMsg = new TrackedMessage(msg, authorID);
@@ -48,7 +49,6 @@ namespace Haphrain
             t.StartTimer(handler, 60000);
             TrackedSettingsMessages.Add(tMsg);
         }
-
         internal static void AddRandomTracker(RestUserMessage msg)
         {
             var tMsg = new TrackedMessage(msg, 0);
@@ -60,6 +60,41 @@ namespace Haphrain
             }
             t.StartTimer(handler, 15000);
             RandomMessages.Add(tMsg);
+        }
+
+        internal static List<TimeoutTracker> UserTimeouts { get; set; } = new List<TimeoutTracker>(); //Keep track of user timeouts after command usage
+        internal static List<TimeoutTimer> UserTimeoutTimers { get; set; } = new List<TimeoutTimer>(); //Keep track of timers so proper one can be found
+
+        internal static void AddUserTimeout(SocketUser usr, ulong guildID)
+        {
+            var track = new TimeoutTracker(usr, guildID);
+            TimeoutTimer tTimer = null;
+            Timer t = new Timer();
+            void handler(object sender, ElapsedEventArgs e)
+            {
+                t.Stop();
+                if (UserTimeouts.Contains(track))
+                {
+                    UserTimeouts.Remove(track);
+                    UserTimeoutTimers.Remove(tTimer);
+                }
+            }
+            t.StartTimer(handler, (int)(Constants._CMDTIMEOUT_ * 1000));
+            tTimer = new TimeoutTimer(track);
+            UserTimeouts.Add(track);
+            UserTimeoutTimers.Add(tTimer);
+        }
+        internal static async Task<bool> CheckUserTimeout(SocketUser usr, ulong guildID, IMessageChannel channel)
+        {
+            var Tracker = UserTimeouts.SingleOrDefault(ut => ut.TrackedUser == usr && ut.GuildID == guildID);
+            if (Tracker != null)
+            {
+                TimeoutTimer t = UserTimeoutTimers.SingleOrDefault(p => p.Tracker == Tracker);
+                var msg = await channel.SendMessageAsync($"Slow down {usr.Username}! Try again in {TimeSpan.FromSeconds((int)Constants._CMDTIMEOUT_-(DateTime.Now - t.StartTime).TotalSeconds).Seconds}.{(TimeSpan.FromSeconds(5 - (DateTime.Now - t.StartTime).TotalSeconds).Milliseconds)/100}seconds.");
+                AddRandomTracker((RestUserMessage)msg);
+                return false;
+            }
+            return true;
         }
 
         internal static async Task UntrackMessage(TrackedMessage msg)
@@ -87,6 +122,30 @@ namespace Haphrain
         {
             SourceMessage = source;
             TriggerById = triggerID;
+        }
+    }
+
+    internal class TimeoutTracker
+    {
+        internal SocketUser TrackedUser { get; set; }
+        internal ulong GuildID { get; set; }
+
+        public TimeoutTracker(SocketUser usr, ulong id)
+        {
+            TrackedUser = usr;
+            GuildID = id;
+        }
+    }
+
+    internal class TimeoutTimer
+    {
+        internal TimeoutTracker Tracker { get; set; }
+        internal DateTime StartTime { get; }
+
+        internal TimeoutTimer(TimeoutTracker timeout)
+        {
+            Tracker = timeout;
+            StartTime = DateTime.Now;
         }
     }
 }

@@ -269,11 +269,17 @@ namespace Haphrain
 
             if (!(msg.HasStringPrefix(guildPrefix, ref argPos)) && !(msg.HasMentionPrefix(Client.CurrentUser, ref argPos))) return;
 
+            if (!(await GlobalVars.CheckUserTimeout(context.Message.Author, context.Guild.Id, context.Channel))) return;
             IResult Result = null;
             try
             {
                 Result = await Commands.ExecuteAsync(context, argPos, Provider);
-                if (!Result.IsSuccess)
+                if (Result.Error == CommandError.UnmetPrecondition)
+                {
+                    var errorMsg = await context.Channel.SendMessageAsync(Result.ErrorReason);
+                    GlobalVars.AddRandomTracker(errorMsg);
+                }
+                else if (!Result.IsSuccess)
                 {
                     if (Result.ErrorReason.ToLower().Contains("unknown command"))
                     {
@@ -284,6 +290,7 @@ namespace Haphrain
                     else
                         await Client_Log(new LogMessage(LogSeverity.Error, "Client_MessageReceived", $"Command text: {context.Message.Content} | Error: {Result.ErrorReason}"));
                 }
+                GlobalVars.AddUserTimeout(context.Message.Author, context.Guild.Id);
             }
             catch (Exception ex)
             {

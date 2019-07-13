@@ -8,6 +8,8 @@ using System.Net;
 using Haphrain.Classes.JsonObjects;
 using Discord;
 using System.Linq;
+using Discord.WebSocket;
+using Discord.Rest;
 
 namespace Haphrain.Classes.Commands
 {
@@ -53,7 +55,8 @@ namespace Haphrain.Classes.Commands
                 Console.WriteLine($"Exception: {ex.Message}");
             }
 
-            if (oxfLemma.Results != null){
+            if (oxfLemma.Results != null)
+            {
                 string newTerm = oxfLemma.Results.First(lex => lex.LexicalEntries[0].Text != null).LexicalEntries[0].Text.ToLower();
                 WEBSERVICE_URL = "https://od-api.oxforddictionaries.com:443/api/v2/entries/en-gb/" + newTerm;
 
@@ -90,14 +93,22 @@ namespace Haphrain.Classes.Commands
 
             if (builder.Fields.Count == 0)
             {
-                await Context.Channel.SendMessageAsync("Failed to find this on the Oxford Dictionary, defaulting to Urban Dictionary");
-                await UrbDefine(term);
+                var c = (ITextChannel)Context.Channel;
+                RestUserMessage m;
+                if (c.IsNsfw)
+                {
+                    m = await Context.Channel.SendMessageAsync("Failed to find this on the Oxford Dictionary, trying again on Urban Dictionary.");
+                    await UrbDefine(term);
+                    GlobalVars.AddRandomTracker(m);
+                }
+                else
+                    await Context.Channel.SendMessageAsync("Nothing found, try again in a channel marked NSFW.");
                 return;
             }
             else await Context.Channel.SendMessageAsync(null, false, builder.Build());
         }
 
-        [Command("define urb"), Alias("def urb"), Summary("Gets the definition of the provided term from Urban Dictionary"), Priority(2)]
+        [Command("define urb"), Alias("def urb"), Summary("Gets the definition of the provided term from Urban Dictionary"), Priority(2), RequireNsfw(ErrorMessage = "Please use this in a channel marked NSFW.")]
         public async Task UrbDefine(params string[] term)
         {
             string WEBSERVICE_URL = "http://api.urbandictionary.com/v0/define?result_type=exact&term=" + string.Join(' ', term);

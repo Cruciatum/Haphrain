@@ -14,40 +14,21 @@ namespace Haphrain.Classes.Commands
 {
     public class ModCommands : ModuleBase<SocketCommandContext>
     {
-        [Command("setprefix"), Alias("prefix", "newprefix"), Summary("Set a new prefix for this server")]
+        [Command("setprefix"), Alias("prefix", "newprefix"), Summary("Set a new prefix for this server"), RequireUserPermission(GuildPermission.Administrator, ErrorMessage = "You require Administrator permissions to do this")]
         public async Task SetPrefix(string newPrefix)
         {
-            SocketGuildUser guildUser = Context.Guild.Users.Single(u => u.Id == Context.User.Id);
-            if (!guildUser.GuildPermissions.Administrator)
+            if (newPrefix != null && newPrefix != "")
             {
-                var uMsg = await Context.Channel.SendMessageAsync($"{Context.User.Mention}, this command requires you to have Administrator permissions.");
-                var owner = Context.Guild.Owner;
-                var channel = await owner.GetOrCreateDMChannelAsync();
-                await channel.SendMessageAsync($"Hi {owner.Nickname}, user {Context.User.Mention} has tried to change my prefix in {Context.Guild.Name} in channel: #{Context.Channel.Name}");
-                Timer t = new Timer();
-                async void handler(object sender, ElapsedEventArgs e)
-                {
-                    t.Stop();
-                    await uMsg.DeleteAsync();
-                    await Context.Message.DeleteAsync();
-                }
-                t.StartTimer(handler, 10000);
-            }
-            else
-            {
-                if (newPrefix != null && newPrefix != "")
-                {
-                    XmlDocument doc = new XmlDocument();
-                    doc.Load(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.1", @"Data\Guilds.xml"));
+                XmlDocument doc = new XmlDocument();
+                doc.Load(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.1", @"Data\Guilds.xml"));
 
-                    var guildNode = doc.SelectSingleNode($"/Guilds/Guild[@GuildID='{Context.Guild.Id}']");
-                    var prefixNode = guildNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "Prefix");
-                    prefixNode.InnerText = newPrefix;
+                var guildNode = doc.SelectSingleNode($"/Guilds/Guild[@GuildID='{Context.Guild.Id}']");
+                var prefixNode = guildNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "Prefix");
+                prefixNode.InnerText = newPrefix;
 
-                    doc.Save(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.1", @"Data\Guilds.xml"));
+                doc.Save(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.1", @"Data\Guilds.xml"));
 
-                    await Context.Channel.SendMessageAsync($"{Context.User.Mention}, I have updated your server's prefix to {newPrefix}");
-                }
+                await Context.Channel.SendMessageAsync($"{Context.User.Mention}, I have updated your server's prefix to {newPrefix}");
             }
         }
 
@@ -57,19 +38,11 @@ namespace Haphrain.Classes.Commands
             if (Context.User.Id != Context.Guild.Owner.Id)
             {
                 var uMsg = await Context.Channel.SendMessageAsync($"{Context.User.Mention}, NO, screw you! Only {Context.Guild.Owner.Mention} can make me leave!");
-
                 var owner = Context.Guild.Owner;
                 var channel = await owner.GetOrCreateDMChannelAsync();
                 var msgToOwner = await channel.SendMessageAsync($"Hi {Context.Guild.Owner.Username}, user {Context.User.Mention} has tried to make me leave {Context.Guild.Name} in channel: #{Context.Channel.Name}");
 
-                Timer t = new Timer();
-                async void handler(object sender, ElapsedEventArgs e)
-                {
-                    t.Stop();
-                    await uMsg.DeleteAsync();
-                    await Context.Message.DeleteAsync();
-                }
-                t = t.StartTimer(handler, 10000);
+                GlobalVars.AddRandomTracker(uMsg);
             }
             else
             {
@@ -78,7 +51,7 @@ namespace Haphrain.Classes.Commands
             }
         }
 
-        [Command("setup"), Summary("Show settings for this server"), Priority(0), RequireUserPermission(GuildPermission.Administrator)]
+        [Command("setup"), Summary("Show settings for this server"), Priority(0), RequireUserPermission(GuildPermission.Administrator, ErrorMessage = "You require Administrator permissions to do this")]
         public async Task ServerSettings()
         {
             Options guildOptions = new Options();
@@ -94,13 +67,13 @@ namespace Haphrain.Classes.Commands
             builder.Title = "Server settings";
             builder.AddField("\u0031\u20E3 Log Embedded messages", $"Currently:{(guildOptions.LogEmbeds ? "True" : "False")}");
             builder.AddField("\u0032\u20E3 Log Attached files", $"Currently:{(guildOptions.LogAttachments ? "True" : "False")}");
-        
+
             RestUserMessage msg = await Context.Channel.SendMessageAsync(null, false, builder.Build());
             GlobalVars.AddSettingsTracker(msg, Context.Message.Author.Id);
             await msg.AddReactionsAsync(new Emoji[] { new Emoji("\u0031\u20E3"), new Emoji("\u0032\u20E3") });
         }
 
-        [Command("set"), Summary("View available settings"), RequireUserPermission(GuildPermission.Administrator)]
+        [Command("set"), Summary("View available settings"), RequireUserPermission(GuildPermission.Administrator, ErrorMessage = "You require Administrator permissions to do this")]
         public async Task GetSets()
         {
             EmbedBuilder b = new EmbedBuilder();
@@ -110,7 +83,7 @@ namespace Haphrain.Classes.Commands
             await Context.Channel.SendMessageAsync(null, false, b.Build());
         }
 
-        [Command("set logchannel"), Alias("set lc"), Summary("Setup the channel for logging stuff"), RequireUserPermission(GuildPermission.Administrator)]
+        [Command("set logchannel"), Alias("set lc"), Summary("Setup the channel for logging stuff"), RequireUserPermission(GuildPermission.Administrator, ErrorMessage = "You require Administrator permissions to do this")]
         public async Task SetupLogChannel()
         {
             XmlDocument doc = new XmlDocument();
