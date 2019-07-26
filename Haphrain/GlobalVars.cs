@@ -2,6 +2,7 @@
 using Discord.Rest;
 using Discord.WebSocket;
 using Haphrain.Classes.Commands;
+using Haphrain.Classes.HelperObjects;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Xml;
+using Haphrain.Classes.Data;
 
 namespace Haphrain
 {
@@ -24,6 +26,7 @@ namespace Haphrain
         internal static List<TrackedMessage> TrackedLogChannelMessages { get; set; } = new List<TrackedMessage>(); //For changing log channel
         internal static List<TrackedMessage> TrackedSettingsMessages { get; set; } = new List<TrackedMessage>(); //For changing settings
         internal static List<TrackedMessage> RandomMessages { get; set; } = new List<TrackedMessage>(); //For Random other stuff including error messages
+        internal static List<Poll> Polls { get; set; } = new List<Poll>();
 
         internal static void AddLogChannelTracker(RestUserMessage msg, ulong authorID)
         {

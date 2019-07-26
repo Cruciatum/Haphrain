@@ -36,7 +36,7 @@ namespace Haphrain
             {
                 LogLevel = LogSeverity.Debug
             });
-
+            
             Commands = new CommandService(new CommandServiceConfig
             {
                 CaseSensitiveCommands = false,
@@ -137,7 +137,16 @@ namespace Haphrain
                     //Check other trackings
                 }
             }
-            if (tMsg != null) await GlobalVars.UntrackMessage(tMsg);
+            if (tMsg != null) { await GlobalVars.UntrackMessage(tMsg); return; }
+            var p = GlobalVars.Polls.SingleOrDefault(x => x.PollMessage.Id == reaction.MessageId);
+            if (p != null)
+            {
+                bool? b = await p.AddReaction((SocketUser)reaction.User, p.PollOptions[0/*int.Parse(reaction.Emote.Name) -- Get proper value off the emote name*/]);
+                if (b != true)
+                {
+                    await ((SocketUserMessage)reaction.Message).RemoveReactionAsync(reaction.Emote, (SocketUser)reaction.User);
+                }
+            }
         }
 
         private async Task CheckGuildsStartup()
@@ -285,6 +294,12 @@ namespace Haphrain
                     {
                         await Client_Log(new LogMessage(LogSeverity.Error, "Client_MessageReceived", $"Unknown command sent by {context.Message.Author.ToString()} in guild: {context.Guild.Id} - Command text: {context.Message.Content}"));
                         var errorMsg = await context.Channel.SendMessageAsync($"Sorry, I don't know what I'm supposed to do with that...");
+                        GlobalVars.AddRandomTracker(errorMsg);
+                    }
+                    else if (Result.ErrorReason.ToLower().Contains("too many param"))
+                    {
+                        await Client_Log(new LogMessage(LogSeverity.Warning, "Client_MessageReceived", $"Invalid parameters sent by {context.Message.Author.ToString()} in guild: {context.Guild.Id} - Command text: {context.Message.Content}"));
+                        var errorMsg = await context.Channel.SendMessageAsync($"Pretty sure you goofed on the parameters you've supplied there {context.Message.Author.Mention}!");
                         GlobalVars.AddRandomTracker(errorMsg);
                     }
                     else

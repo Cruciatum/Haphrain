@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Haphrain.Classes.Commands
@@ -18,6 +19,7 @@ namespace Haphrain.Classes.Commands
             builder.AddField("Remind", "Set up a timed reminder\nUsage: `{prefix}Remind {number}{d/h/m/s} {message}");
             builder.AddField("Define", "Perform an Oxford Dictionary search for a term.");
             builder.AddField("Define urb", "Force define through an Urban Dictionary search (*NSFW*)");
+            builder.AddField("Convert", "Convert different measurement types to other systems, use this to see the options.");
             builder.AddField("SetPrefix (Prefix, NewPrefix)", "Select a new prefix to be used on this server (Administrators only)\nUsage: `{prefix}SetPrefix {NewPrefix}`");
             builder.AddField("Goodbye", "Make the bot leave the server (Owner only)");
 
