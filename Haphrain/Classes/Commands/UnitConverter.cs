@@ -86,7 +86,21 @@ namespace Haphrain.Classes.Commands
             }
 
             NumberFormatInfo ni = new CultureInfo("sv-SE", false).NumberFormat;
-            await Context.Channel.SendMessageAsync($"`{convertAmt} {StartUnit} = {valuesToSend.ToString("N6", ni).TrimEnd('0', ',')} {EndUnit}`");
+            string r = valuesToSend.ToString("N6", ni);
+            if (r.Contains(','))
+            {
+                for (int i = r.Length - 1; i > 0; i--)
+                {
+                    if (!r.Contains(',')) break;
+                    if (r[i] == '0' || r[i] == ',')
+                    {
+                        var rArray = r.ToList();
+                        rArray.RemoveAt(i);
+                        r = string.Join("", rArray);
+                    }
+                }
+            }
+            await Context.Channel.SendMessageAsync($"`{convertAmt} {StartUnit} = {r} {EndUnit}`");
         }
 
         [Command("convert temp"), Summary("Convert from Celcius to Fahrenheit and back"), Priority(2)]
@@ -137,7 +151,21 @@ namespace Haphrain.Classes.Commands
                 resultValue = ConvertHelpers.ToKelvin(amtToConvert, StartUnit);
 
             NumberFormatInfo ni = new CultureInfo("sv-SE", false).NumberFormat;
-            await Context.Channel.SendMessageAsync($"`{convertAmt} °{StartUnit} = {resultValue.ToString("N6", ni).TrimEnd('0', ',')} °{EndUnit}`");
+            string r = resultValue.ToString("N6", ni);
+            if (r.Contains(','))
+            {
+                for (int i = r.Length-1; i > 0; i--)
+                {
+                    if (!r.Contains(',')) break;
+                    if (r[i] == '0' || r[i] == ',')
+                    {
+                        var rArray = r.ToList();
+                        rArray.RemoveAt(i);
+                        r = string.Join("", rArray);
+                    }
+                }
+            }
+            await Context.Channel.SendMessageAsync($"`{convertAmt} °{StartUnit} = {r} °{EndUnit}`");
         }
 
         [Command("convert liq"), Summary("Convert from Liters to Ounces/Gallons and back"), Priority(2)]
@@ -198,12 +226,27 @@ namespace Haphrain.Classes.Commands
             }
 
             NumberFormatInfo ni = new CultureInfo("sv-SE", false).NumberFormat;
-            await Context.Channel.SendMessageAsync($"`{convertAmt} {StartUnit} = {valuesToSend.ToString("N6", ni).TrimEnd('0', ',')} {EndUnit}`");
+            string r = valuesToSend.ToString("N6", ni);
+            if (r.Contains(','))
+            {
+                for (int i = r.Length - 1; i > 0; i--)
+                {
+                    if (!r.Contains(',')) break;
+                    if (r[i] == '0' || r[i] == ',')
+                    {
+                        var rArray = r.ToList();
+                        rArray.RemoveAt(i);
+                        r = string.Join("", rArray);
+                    }
+                }
+            }
+            await Context.Channel.SendMessageAsync($"`{convertAmt} {StartUnit} = {r} {EndUnit}`");
         }
     }
 
     internal static class ConvertHelpers
     {
+        #region Distance
         internal static double ToMeters(double startAmt, string sourceUnit)
         {
             double d = 0d;
@@ -242,7 +285,9 @@ namespace Haphrain.Classes.Commands
         internal static double ToMiles(double startAmt,string sourceUnit) { return ConvertHelpers.ToKm(startAmt, sourceUnit) / 1.609344d; }
         internal static double ToFeet(double startAmt, string sourceUnit) { return ConvertHelpers.ToMeters(startAmt, sourceUnit) / 0.3048d; }
         internal static double ToInches(double startAmt, string sourceUnit) { return ConvertHelpers.ToMeters(startAmt,sourceUnit) / 0.0254d; }
+        #endregion
 
+        #region Temp
         internal static double ToCelcius(double startAmt, string sourceUnit)
         {
             double d = 0d;
@@ -263,7 +308,9 @@ namespace Haphrain.Classes.Commands
 
         internal static double ToFahrenheit(double startAmt, string sourceUnit) { return (ConvertHelpers.ToCelcius(startAmt, sourceUnit) * (9d / 5d)) + 32d; }
         internal static double ToKelvin(double startAmt, string sourceUnit) { return ConvertHelpers.ToCelcius(startAmt, sourceUnit) + 273.15d; }
+        #endregion
 
+        #region Liquid
         internal static double ToLiters(double startAmt, string sourceUnit)
         {
             double d = 0;
@@ -297,5 +344,6 @@ namespace Haphrain.Classes.Commands
 
         internal static double ToGallons(double startAmt, string sourceUnit) { return ConvertHelpers.ToLiters(startAmt, sourceUnit) * 0.264172d; }
         internal static double ToFlOunces(double startAmt, string sourceUnit) { return ConvertHelpers.ToLiters(startAmt, sourceUnit) * 33.814023d; }
+        #endregion
     }
 }
