@@ -57,6 +57,7 @@ namespace Haphrain
             Client.JoinedGuild += Client_JoinedGuild;
             Client.LeftGuild += Client_LeftGuild;
             Client.ReactionAdded += Client_ReactionAdded;
+            Client.ReactionRemoved += Client_ReactionRemoved;
 
             string Token = "";
             using (var s = new FileStream((Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)).Replace(@"bin\Debug\netcoreapp2.1", @"Data\Token.txt"), FileMode.Open, FileAccess.Read))
@@ -76,6 +77,7 @@ namespace Haphrain
 
         private async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel channel, SocketReaction reaction)
         {
+            if (reaction.User.Value.Id == Client.CurrentUser.Id) return;
             var tMsg = GlobalVars.TrackedLogChannelMessages.SingleOrDefault(m => m.SourceMessage.Id == reaction.MessageId && m.TriggerById == reaction.UserId);
             var guildID = ((SocketGuildChannel)channel).Guild.Id;
             if (tMsg != null)
@@ -141,11 +143,24 @@ namespace Haphrain
             var p = GlobalVars.Polls.SingleOrDefault(x => x.PollMessage.Id == reaction.MessageId);
             if (p != null)
             {
-                bool? b = await p.AddReaction((SocketUser)reaction.User, p.PollOptions[0/*int.Parse(reaction.Emote.Name) -- Get proper value off the emote name*/]);
+                bool? b = false;
+                if (p.PollReactions.SingleOrDefault(x=>x.User.Id == reaction.User.Value.Id) == null)
+                    b = await p.AddReaction((SocketUser)reaction.User, p.PollOptions.SingleOrDefault(x=>x.React.Name == reaction.Emote.Name).Option);
+                else
+                    await p.PollMessage.RemoveReactionAsync(reaction.Emote, (SocketUser)reaction.User);
                 if (b != true)
                 {
-                    await ((SocketUserMessage)reaction.Message).RemoveReactionAsync(reaction.Emote, (SocketUser)reaction.User);
+                    await p.PollMessage.RemoveReactionAsync(reaction.Emote, (SocketUser)reaction.User);
                 }
+            }
+        }
+
+        private async Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel channel, SocketReaction reaction)
+        {
+            var poll = GlobalVars.Polls.SingleOrDefault(x => x.PollMessage.Id == reaction.MessageId);
+            if (poll != null)
+            {
+                bool? b = await poll.RemoveReaction((SocketUser)reaction.User, poll.PollOptions.SingleOrDefault(x => x.React.Name == reaction.Emote.Name).Option);
             }
         }
 

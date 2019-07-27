@@ -8,6 +8,7 @@ using Discord;
 using System.Collections.Generic;
 using System.Linq;
 using Haphrain.Classes.Data;
+using Haphrain.Classes.HelperObjects;
 
 namespace Haphrain.Classes.Commands
 {
@@ -120,7 +121,7 @@ namespace Haphrain.Classes.Commands
         public static async Task<IUser> GetUserFromString(string s, IGuild server)
         {
             if (s.IndexOf('@') == -1 || s.Replace("<", "").Replace(">", "").Length != s.Length - 2)
-                throw new System.Exception("Not a valid user mention.");
+                throw new Exception("Not a valid user mention.");
 
             string idStr = s.Replace("<", "").Replace(">", "").Replace("@", "");
 

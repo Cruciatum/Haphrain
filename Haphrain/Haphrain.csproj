@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Game\Data\" />
     <Folder Include="Resources\Database\" />
     <Folder Include="Resources\Datatypes\" />
     <Folder Include="Resources\Extensions\" />

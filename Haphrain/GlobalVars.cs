@@ -26,7 +26,6 @@ namespace Haphrain
         internal static List<TrackedMessage> TrackedLogChannelMessages { get; set; } = new List<TrackedMessage>(); //For changing log channel
         internal static List<TrackedMessage> TrackedSettingsMessages { get; set; } = new List<TrackedMessage>(); //For changing settings
         internal static List<TrackedMessage> RandomMessages { get; set; } = new List<TrackedMessage>(); //For Random other stuff including error messages
-        internal static List<Poll> Polls { get; set; } = new List<Poll>();
 
         internal static void AddLogChannelTracker(RestUserMessage msg, ulong authorID)
         {
@@ -93,11 +92,24 @@ namespace Haphrain
             if (Tracker != null)
             {
                 TimeoutTimer t = UserTimeoutTimers.SingleOrDefault(p => p.Tracker == Tracker);
-                var msg = await channel.SendMessageAsync($"Slow down {usr.Username}! Try again in {TimeSpan.FromSeconds((int)Constants._CMDTIMEOUT_-(DateTime.Now - t.StartTime).TotalSeconds).Seconds}.{(TimeSpan.FromSeconds(5 - (DateTime.Now - t.StartTime).TotalSeconds).Milliseconds)/100}seconds.");
+                var msg = await channel.SendMessageAsync($"Slow down {usr.Username}! Try again in {TimeSpan.FromSeconds((int)Constants._CMDTIMEOUT_ - (DateTime.Now - t.StartTime).TotalSeconds).Seconds}.{(TimeSpan.FromSeconds(5 - (DateTime.Now - t.StartTime).TotalSeconds).Milliseconds) / 100}seconds.");
                 AddRandomTracker((RestUserMessage)msg);
                 return false;
             }
             return true;
+        }
+
+        internal static List<Poll> Polls { get; set; } = new List<Poll>();
+        internal static void AddPoll(Poll p, ulong duration)
+        {
+            Timer t = new Timer();
+            void handler(object sender, ElapsedEventArgs e)
+            {
+                t.Stop();
+                if (Polls.Contains(p)) Polls.Remove(p);
+            }
+            t.StartTimer(handler, duration*1000);
+            Polls.Add(p);
         }
 
         internal static async Task UntrackMessage(TrackedMessage msg)
