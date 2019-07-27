@@ -94,7 +94,6 @@ namespace Haphrain.Classes.Commands
         public async Task PollClose(uint id)
         {
             Poll p = GlobalVars.Polls.SingleOrDefault(x => x.PollId == id);
-            GlobalVars.Polls.Remove(p);
 
             EmbedBuilder eb = new EmbedBuilder();
             eb.WithAuthor($"CLOSED | Poll by {p.PollCreator.Username}#{p.PollCreator.DiscriminatorValue}", p.PollCreator.GetAvatarUrl());
@@ -103,7 +102,7 @@ namespace Haphrain.Classes.Commands
             foreach (PollOption s in p.PollOptions)
             {
                 float amt = p.PollReactions.Count(x => x.PollVote == s.Option);
-                eb.AddField($"{s.React} {s.Option}", $"{Poll.GetPercentageBar(p, s.Option)} - 0/{p.PollReactions.Count} (0%)");
+                eb.AddField($"{s.React} {s.Option}", $"{Poll.GetPercentageBar(p, s.Option)} - {amt}/{p.PollReactions.Count} ({(amt / p.PollReactions.Count * 100).ToString("N2")}%)");
             }
             eb.WithColor(255, 0, 0);
 
@@ -111,6 +110,8 @@ namespace Haphrain.Classes.Commands
                 x.Content = "";
                 x.Embed = eb.Build();
             });
+
+            GlobalVars.Polls.Remove(p);
         }
 
         [Command("poll reset"), Summary("Reset poll by ID")]

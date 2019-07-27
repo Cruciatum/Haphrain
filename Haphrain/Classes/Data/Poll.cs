@@ -71,7 +71,7 @@ namespace Haphrain.Classes.Data
                 if (total == 0)
                     b.AddField($"{s.React} {s.Option}", $"{GetPercentageBar(this, s.Option)} - {amt}/{total} (0,00%)");
                 else
-                    b.AddField($"{s.React} {s.Option}", $"{GetPercentageBar(this, s.Option)} - {amt}/{total} ({((amt / total) * 100).ToString("N2")}%)");
+                    b.AddField($"{s.React} {s.Option}", $"{GetPercentageBar(this, s.Option)} - {amt}/{total} ({(amt / total * 100).ToString("N2")}%)");
 
             }
 
