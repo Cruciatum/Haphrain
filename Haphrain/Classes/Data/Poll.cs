@@ -42,20 +42,18 @@ namespace Haphrain.Classes.Data
             await PollMessage.AddReactionsAsync(emojis.ToArray());
         }
 
-        internal async Task<bool?> AddReaction(SocketUser usr, string vote)
+        internal bool? AddReaction(SocketUser usr, string vote)
         {
             if (PollOptions.Where(x=>x.Option == vote) == null) return null;
             if (PollReactions.Where(x => x.User.Id == usr.Id) == null) return false;
             PollReactions.Add(new PollReaction(usr, vote));
-            await Update();
             return true;
         }
-        internal async Task<bool?> RemoveReaction(SocketUser usr, string vote)
+        internal bool? RemoveReaction(SocketUser usr, string vote)
         {
             if (PollOptions.Where(x=>x.Option == vote)==null) return null;
             if (PollReactions.Where(x => x.User.Id == usr.Id) == null) return false;
             PollReactions.Remove(PollReactions.Single(x => x.User.Id == usr.Id && x.PollVote == vote));
-            await Update();
             return true;
         }
 
@@ -65,14 +63,15 @@ namespace Haphrain.Classes.Data
             b.WithAuthor($"Poll by {PollCreator.Username}#{PollCreator.DiscriminatorValue}", PollCreator.GetAvatarUrl());
             b.WithDescription($"**{PollTitle}**");
             b.WithFooter($"PollID: {PollId}");
+            b.WithColor(0, 255, 0);
             float total = PollReactions.Count;
             foreach (PollOption s in PollOptions)
             {
                 float amt = PollReactions.Count(x => x.PollVote == s.Option);
                 if (total == 0)
-                    b.AddField(s.Option, $"{GetPercentageBar(this, s.Option)} - {amt}/{total} (0,00%)");
+                    b.AddField($"{s.React} {s.Option}", $"{GetPercentageBar(this, s.Option)} - {amt}/{total} (0,00%)");
                 else
-                    b.AddField(s.Option, $"{GetPercentageBar(this, s.Option)} - {amt}/{total} ({((amt / total) * 100).ToString("N2")}%)");
+                    b.AddField($"{s.React} {s.Option}", $"{GetPercentageBar(this, s.Option)} - {amt}/{total} ({((amt / total) * 100).ToString("N2")}%)");
 
             }
 

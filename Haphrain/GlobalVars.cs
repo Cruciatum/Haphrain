@@ -103,9 +103,24 @@ namespace Haphrain
         internal static void AddPoll(Poll p, ulong duration)
         {
             Timer t = new Timer();
-            void handler(object sender, ElapsedEventArgs e)
+            async void handler(object sender, ElapsedEventArgs e)
             {
                 t.Stop();
+                EmbedBuilder eb = new EmbedBuilder();
+                eb.WithAuthor($"CLOSED | Poll by {p.PollCreator.Username}#{p.PollCreator.DiscriminatorValue}", p.PollCreator.GetAvatarUrl());
+                eb.WithDescription($"~~**{p.PollTitle}**~~");
+                eb.WithFooter($"PollID: {p.PollId}");
+                foreach (PollOption s in p.PollOptions)
+                {
+                    float amt = p.PollReactions.Count(x => x.PollVote == s.Option);
+                    eb.AddField($"{s.React} {s.Option}", $"{Poll.GetPercentageBar(p, s.Option)} - 0/{p.PollReactions.Count} (0%)");
+                }
+                eb.WithColor(255, 0, 0);
+
+                await p.PollMessage.ModifyAsync(x => {
+                    x.Content = "";
+                    x.Embed = eb.Build();
+                });
                 if (Polls.Contains(p)) Polls.Remove(p);
             }
             t.StartTimer(handler, duration*1000);

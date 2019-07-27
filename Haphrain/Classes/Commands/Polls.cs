@@ -69,10 +69,11 @@ namespace Haphrain.Classes.Commands
                 eb.WithAuthor($"Poll by {Context.User.Username}#{Context.User.DiscriminatorValue}", Context.User.GetAvatarUrl());
                 eb.WithDescription($"**{question}**");
                 eb.WithFooter($"PollID: {p.PollId}");
+                eb.WithColor(0, 255, 0);
                 foreach (PollOption s in p.PollOptions)
                 {
                     float amt = p.PollReactions.Count(x => x.PollVote == s.Option);
-                    eb.AddField($"{s.React} {s.Option}", $"{Poll.GetPercentageBar(p, s.Option)} - 0/{p.PollReactions.Count} (0%)");
+                    eb.AddField($"{s.React} {s.Option}", $"{Poll.GetPercentageBar(p, s.Option)} - 0/{p.PollReactions.Count} (0,00%)");
                 }
 
                 await m.ModifyAsync(x => {
@@ -117,6 +118,9 @@ namespace Haphrain.Classes.Commands
         {
             Poll p = GlobalVars.Polls.SingleOrDefault(x => x.PollId == id);
             p.PollReactions = new List<PollReaction>();
+            await p.PollMessage.DeleteAsync();
+            p.PollMessage = await Context.Channel.SendMessageAsync("Re-posting poll");
+            await p.AddAllReactions();
             await p.Update();
         }
     }

@@ -72,6 +72,15 @@ namespace Haphrain
             await Client.LoginAsync(TokenType.Bot, Token);
             await Client.StartAsync();
 
+            Timer t = new Timer();
+            t.AutoReset = true;
+            async void handler (object sender, ElapsedEventArgs e)
+            {
+                foreach (Poll p in GlobalVars.Polls)
+                    await p.Update();
+            }
+            t.StartTimer(handler, 5000);
+
             await Task.Delay(-1);
         }
 
@@ -145,7 +154,7 @@ namespace Haphrain
             {
                 bool? b = false;
                 if (p.PollReactions.SingleOrDefault(x=>x.User.Id == reaction.User.Value.Id) == null)
-                    b = await p.AddReaction((SocketUser)reaction.User, p.PollOptions.SingleOrDefault(x=>x.React.Name == reaction.Emote.Name).Option);
+                    b = p.AddReaction((SocketUser)reaction.User, p.PollOptions.SingleOrDefault(x=>x.React.Name == reaction.Emote.Name).Option);
                 else
                     await p.PollMessage.RemoveReactionAsync(reaction.Emote, (SocketUser)reaction.User);
                 if (b != true)
@@ -155,13 +164,14 @@ namespace Haphrain
             }
         }
 
-        private async Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel channel, SocketReaction reaction)
+        private Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel channel, SocketReaction reaction)
         {
             var poll = GlobalVars.Polls.SingleOrDefault(x => x.PollMessage.Id == reaction.MessageId);
             if (poll != null)
             {
-                bool? b = await poll.RemoveReaction((SocketUser)reaction.User, poll.PollOptions.SingleOrDefault(x => x.React.Name == reaction.Emote.Name).Option);
+                bool? b = poll.RemoveReaction((SocketUser)reaction.User, poll.PollOptions.SingleOrDefault(x => x.React.Name == reaction.Emote.Name).Option);
             }
+            return null;
         }
 
         private async Task CheckGuildsStartup()
