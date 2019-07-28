@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using Haphrain.Classes.Commands;
+using Haphrain.Classes.HelperObjects;
 using Haphrain.Classes.JsonObjects;
 using Newtonsoft.Json;
 using System;
@@ -104,7 +105,7 @@ namespace Haphrain.Classes.Data
                     t.Stop();
                     GfyCatCredential = "";
                 }
-                t.StartTimer(handler, resultObj.expires_in * 1000);
+                t.StartTimer(handler, (ulong)(resultObj.expires_in * 1000));
             }
 
             headers.Add("Authorization", GfyCatCredential);
@@ -181,14 +182,17 @@ namespace Haphrain.Classes.Data
                         }
                         c.DownloadFile(a.Url, file);
                         while (c.IsBusy) { }
-
                     }
+                    if (msg.Content == "")
+                        await channel.SendFileAsync(file, $"From: {msg.Author.Mention}({msg.Author.Username}#{msg.Author.Discriminator}) in {MentionUtils.MentionChannel(msg.Channel.Id)}\nURL: {msg.GetJumpUrl()}");
+                    else
+                        await channel.SendFileAsync(file, $"From: {msg.Author.Mention}({msg.Author.Username}#{msg.Author.Discriminator}) in {MentionUtils.MentionChannel(msg.Channel.Id)}\nIncluded message: {msg.Content}\nURL: {msg.GetJumpUrl()}");
+                    File.Delete(file);
                 }
-                if (msg.Content == "")
-                    await channel.SendFileAsync(file, $"From: {msg.Author.Mention}({msg.Author.Username}#{msg.Author.Discriminator}) in {MentionUtils.MentionChannel(msg.Channel.Id)}\nURL: {msg.GetJumpUrl()}");
                 else
-                    await channel.SendFileAsync(file, $"From: {msg.Author.Mention}({msg.Author.Username}#{msg.Author.Discriminator}) in {MentionUtils.MentionChannel(msg.Channel.Id)}\nIncluded message: {msg.Content}\nURL: {msg.GetJumpUrl()}");
-                File.Delete(file);
+                {
+                    await channel.SendMessageAsync($"From: {msg.Author.Mention}({msg.Author.Username}#{msg.Author.Discriminator}) in {MentionUtils.MentionChannel(msg.Channel.Id)}\n**Unrecognized Image type**: \"{Path.GetExtension(attached[0].Url).ToUpper()}\"\nURL: {msg.GetJumpUrl()}");
+                }
             }
         }
     }

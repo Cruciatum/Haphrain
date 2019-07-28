@@ -179,7 +179,7 @@ namespace Haphrain
                 }
             }
             catch { }
-            return null;
+            return Task.CompletedTask;
         }
 
         private async Task CheckGuildsStartup()
