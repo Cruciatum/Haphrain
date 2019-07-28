@@ -113,7 +113,7 @@ namespace Haphrain
                 foreach (PollOption s in p.PollOptions)
                 {
                     float amt = p.PollReactions.Count(x => x.PollVote == s.Option);
-                    eb.AddField($"{s.React} {s.Option}", $"{Poll.GetPercentageBar(p, s.Option)} - 0/{p.PollReactions.Count} (0%)");
+                    eb.AddField($"{s.React} {s.Option}", $"{Poll.GetPercentageBar(p, s.Option)} - {amt}/{p.PollReactions.Count} ({amt/p.PollReactions.Count * 100}%)");
                 }
                 eb.WithColor(255, 0, 0);
 

@@ -86,91 +86,99 @@ namespace Haphrain
 
         private async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel channel, SocketReaction reaction)
         {
-            if (reaction.User.Value.Id == Client.CurrentUser.Id) return;
-            var tMsg = GlobalVars.TrackedLogChannelMessages.SingleOrDefault(m => m.SourceMessage.Id == reaction.MessageId && m.TriggerById == reaction.UserId);
-            var guildID = ((SocketGuildChannel)channel).Guild.Id;
-            if (tMsg != null)
+            try
             {
-                XmlDocument doc = new XmlDocument();
-                doc.Load(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.1", @"Data\Guilds.xml"));
-                var guildNode = doc.SelectSingleNode($"/Guilds/Guild[@GuildID='{guildID}']");
-                var optionsNode = guildNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "Options");
-                var channelNode = optionsNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "LogChannelID");
-                if (reaction.Emote.Name == "✅")
-                {
-                    await reaction.Channel.SendMessageAsync($"{reaction.User.Value.Mention}: This channel ({MentionUtils.MentionChannel(channel.Id)}) is now your log channel.");
-                    //Change channel topic
-                    channelNode.InnerText = channel.Id.ToString();
-                    doc.Save(GlobalVars.GuildsFileLoc);
-                }
-                else if (reaction.Emote.Name == "🚫")
-                {
-                    if (channelNode.InnerText == "0")
-                        await reaction.Channel.SendMessageAsync($"{reaction.User.Value.Mention}: Please make a channel for logging and run the command again there.");
-                    else
-                        await reaction.Channel.SendMessageAsync($"Logging channel has not been changed.");
-                }
-            }
-            else
-            {
-                tMsg = GlobalVars.TrackedSettingsMessages.SingleOrDefault(m => m.SourceMessage.Id == reaction.MessageId && m.TriggerById == reaction.UserId);
+                if (reaction.User.Value.Id == Client.CurrentUser.Id) return;
+                var tMsg = GlobalVars.TrackedLogChannelMessages.SingleOrDefault(m => m.SourceMessage.Id == reaction.MessageId && m.TriggerById == reaction.UserId);
+                var guildID = ((SocketGuildChannel)channel).Guild.Id;
                 if (tMsg != null)
                 {
-                    Options guildOptions = new Options();
-                    GlobalVars.GuildsFile.Load(GlobalVars.GuildsFileLoc);
-                    var guildNode = GlobalVars.GuildsFile.SelectSingleNode($"/Guilds/Guild[@GuildID='{guildID}']");
-                    var prefixNode = guildNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "Prefix");
+                    XmlDocument doc = new XmlDocument();
+                    doc.Load(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.1", @"Data\Guilds.xml"));
+                    var guildNode = doc.SelectSingleNode($"/Guilds/Guild[@GuildID='{guildID}']");
                     var optionsNode = guildNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "Options");
-                    guildOptions.LogEmbeds = (optionsNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "LogEmbeds").InnerText == "0") ? false : true;
-                    guildOptions.LogAttachments = (optionsNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "LogAttachments").InnerText == "0") ? false : true;
-                    if (reaction.Emote.Name == "\u0031\u20E3")
+                    var channelNode = optionsNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "LogChannelID");
+                    if (reaction.Emote.Name == "✅")
                     {
-                        optionsNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "LogEmbeds").InnerText = guildOptions.LogEmbeds ? "0" : "1";
-                        if (!guildOptions.LogEmbeds)
-                        {
-                            await channel.SendMessageAsync("Now logging messages with embeds.");
-                        }
-                        else await channel.SendMessageAsync("No longer logging messages with embeds.");
+                        await reaction.Channel.SendMessageAsync($"{reaction.User.Value.Mention}: This channel ({MentionUtils.MentionChannel(channel.Id)}) is now your log channel.");
+                        //Change channel topic
+                        channelNode.InnerText = channel.Id.ToString();
+                        doc.Save(GlobalVars.GuildsFileLoc);
                     }
-                    else if (reaction.Emote.Name == "\u0032\u20E3")
+                    else if (reaction.Emote.Name == "🚫")
                     {
-                        optionsNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "LogAttachments").InnerText = guildOptions.LogAttachments ? "0" : "1";
-                        if (!guildOptions.LogAttachments)
-                        {
-                            await channel.SendMessageAsync("Now logging messages with attachments.");
-                        }
-                        else await channel.SendMessageAsync("No longer logging messages with attachments.");
+                        if (channelNode.InnerText == "0")
+                            await reaction.Channel.SendMessageAsync($"{reaction.User.Value.Mention}: Please make a channel for logging and run the command again there.");
+                        else
+                            await reaction.Channel.SendMessageAsync($"Logging channel has not been changed.");
                     }
-                    GlobalVars.GuildsFile.Save(GlobalVars.GuildsFileLoc);
                 }
                 else
                 {
-                    //Check other trackings
+                    tMsg = GlobalVars.TrackedSettingsMessages.SingleOrDefault(m => m.SourceMessage.Id == reaction.MessageId && m.TriggerById == reaction.UserId);
+                    if (tMsg != null)
+                    {
+                        Options guildOptions = new Options();
+                        GlobalVars.GuildsFile.Load(GlobalVars.GuildsFileLoc);
+                        var guildNode = GlobalVars.GuildsFile.SelectSingleNode($"/Guilds/Guild[@GuildID='{guildID}']");
+                        var prefixNode = guildNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "Prefix");
+                        var optionsNode = guildNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "Options");
+                        guildOptions.LogEmbeds = (optionsNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "LogEmbeds").InnerText == "0") ? false : true;
+                        guildOptions.LogAttachments = (optionsNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "LogAttachments").InnerText == "0") ? false : true;
+                        if (reaction.Emote.Name == "\u0031\u20E3")
+                        {
+                            optionsNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "LogEmbeds").InnerText = guildOptions.LogEmbeds ? "0" : "1";
+                            if (!guildOptions.LogEmbeds)
+                            {
+                                await channel.SendMessageAsync("Now logging messages with embeds.");
+                            }
+                            else await channel.SendMessageAsync("No longer logging messages with embeds.");
+                        }
+                        else if (reaction.Emote.Name == "\u0032\u20E3")
+                        {
+                            optionsNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "LogAttachments").InnerText = guildOptions.LogAttachments ? "0" : "1";
+                            if (!guildOptions.LogAttachments)
+                            {
+                                await channel.SendMessageAsync("Now logging messages with attachments.");
+                            }
+                            else await channel.SendMessageAsync("No longer logging messages with attachments.");
+                        }
+                        GlobalVars.GuildsFile.Save(GlobalVars.GuildsFileLoc);
+                    }
+                    else
+                    {
+                        //Check other trackings
+                    }
                 }
-            }
-            if (tMsg != null) { await GlobalVars.UntrackMessage(tMsg); return; }
-            var p = GlobalVars.Polls.SingleOrDefault(x => x.PollMessage.Id == reaction.MessageId);
-            if (p != null)
-            {
-                bool? b = false;
-                if (p.PollReactions.SingleOrDefault(x=>x.User.Id == reaction.User.Value.Id) == null)
-                    b = p.AddReaction((SocketUser)reaction.User, p.PollOptions.SingleOrDefault(x=>x.React.Name == reaction.Emote.Name).Option);
-                else
-                    await p.PollMessage.RemoveReactionAsync(reaction.Emote, (SocketUser)reaction.User);
-                if (b != true)
+                if (tMsg != null) { await GlobalVars.UntrackMessage(tMsg); return; }
+                var p = GlobalVars.Polls.SingleOrDefault(x => x.PollMessage.Id == reaction.MessageId);
+                if (p != null)
                 {
-                    await p.PollMessage.RemoveReactionAsync(reaction.Emote, (SocketUser)reaction.User);
+                    bool? b = false;
+                    if (p.PollReactions.SingleOrDefault(x => x.User.Id == reaction.User.Value.Id) == null)
+                        b = p.AddReaction((SocketUser)reaction.User, p.PollOptions.SingleOrDefault(x => x.React.Name == reaction.Emote.Name).Option);
+                    else
+                        await p.PollMessage.RemoveReactionAsync(reaction.Emote, (SocketUser)reaction.User);
+                    if (b != true)
+                    {
+                        await p.PollMessage.RemoveReactionAsync(reaction.Emote, (SocketUser)reaction.User);
+                    }
                 }
             }
+            catch { }
         }
 
         private Task Client_ReactionRemoved(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel channel, SocketReaction reaction)
         {
-            var poll = GlobalVars.Polls.SingleOrDefault(x => x.PollMessage.Id == reaction.MessageId);
-            if (poll != null)
+            try
             {
-                bool? b = poll.RemoveReaction((SocketUser)reaction.User, poll.PollOptions.SingleOrDefault(x => x.React.Name == reaction.Emote.Name).Option);
+                var poll = GlobalVars.Polls.SingleOrDefault(x => x.PollMessage.Id == reaction.MessageId);
+                if (poll != null)
+                {
+                    bool? b = poll.RemoveReaction((SocketUser)reaction.User, poll.PollOptions.SingleOrDefault(x => x.React.Name == reaction.Emote.Name).Option);
+                }
             }
+            catch { }
             return null;
         }
 
