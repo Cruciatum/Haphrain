@@ -98,6 +98,7 @@ namespace Haphrain.Classes.Commands
                         rArray.RemoveAt(i);
                         r = string.Join("", rArray);
                     }
+                    else break;
                 }
             }
             await Context.Channel.SendMessageAsync($"`{convertAmt} {StartUnit} = {r} {EndUnit}`");
@@ -163,6 +164,7 @@ namespace Haphrain.Classes.Commands
                         rArray.RemoveAt(i);
                         r = string.Join("", rArray);
                     }
+                    else break;
                 }
             }
             await Context.Channel.SendMessageAsync($"`{convertAmt} °{StartUnit} = {r} °{EndUnit}`");
@@ -238,6 +240,7 @@ namespace Haphrain.Classes.Commands
                         rArray.RemoveAt(i);
                         r = string.Join("", rArray);
                     }
+                    else break;
                 }
             }
             await Context.Channel.SendMessageAsync($"`{convertAmt} {StartUnit} = {r} {EndUnit}`");
