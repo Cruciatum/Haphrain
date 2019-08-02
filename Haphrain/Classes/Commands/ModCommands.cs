@@ -20,13 +20,13 @@ namespace Haphrain.Classes.Commands
             if (newPrefix != null && newPrefix != "")
             {
                 XmlDocument doc = new XmlDocument();
-                doc.Load(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.1", @"Data\Guilds.xml"));
+                doc.Load(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.2", @"Data\Guilds.xml"));
 
                 var guildNode = doc.SelectSingleNode($"/Guilds/Guild[@GuildID='{Context.Guild.Id}']");
                 var prefixNode = guildNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "Prefix");
                 prefixNode.InnerText = newPrefix;
 
-                doc.Save(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.1", @"Data\Guilds.xml"));
+                doc.Save(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.2", @"Data\Guilds.xml"));
 
                 await Context.Channel.SendMessageAsync($"{Context.User.Mention}, I have updated your server's prefix to {newPrefix}");
             }
@@ -87,7 +87,7 @@ namespace Haphrain.Classes.Commands
         public async Task SetupLogChannel()
         {
             XmlDocument doc = new XmlDocument();
-            doc.Load(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.1", @"Data\Guilds.xml"));
+            doc.Load(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.2", @"Data\Guilds.xml"));
             var guildNode = doc.SelectSingleNode($"/Guilds/Guild[@GuildID='{Context.Guild.Id}']");
             var optionsNode = guildNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "Options");
             var channelNode = optionsNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "LogChannelID");

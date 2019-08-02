@@ -20,7 +20,7 @@ namespace Haphrain
     {
         internal static DiscordSocketClient Client { get; set; }
 
-        internal readonly static string GuildsFileLoc = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.1", @"Data\Guilds.xml");
+        internal readonly static string GuildsFileLoc = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.2", @"Data\Guilds.xml");
         internal static XmlDocument GuildsFile { get; set; } = new XmlDocument();
 
         internal static List<TrackedMessage> TrackedLogChannelMessages { get; set; } = new List<TrackedMessage>(); //For changing log channel
@@ -92,7 +92,7 @@ namespace Haphrain
             if (Tracker != null)
             {
                 TimeoutTimer t = UserTimeoutTimers.SingleOrDefault(p => p.Tracker == Tracker);
-                var msg = await channel.SendMessageAsync($"Slow down {usr.Username}! Try again in {TimeSpan.FromSeconds((int)Constants._CMDTIMEOUT_ - (DateTime.Now - t.StartTime).TotalSeconds).Seconds}.{(TimeSpan.FromSeconds(5 - (DateTime.Now - t.StartTime).TotalSeconds).Milliseconds) / 100}seconds.");
+                var msg = await channel.SendMessageAsync($"Slow down {usr.Username}! Try again in {TimeSpan.FromSeconds((int)Constants._CMDTIMEOUT_ - (DateTime.Now - t.StartTime).TotalSeconds).Seconds}.{(TimeSpan.FromSeconds(5 - (DateTime.Now - t.StartTime).TotalSeconds).Milliseconds) / 100} seconds.");
                 AddRandomTracker((RestUserMessage)msg);
                 return false;
             }
@@ -121,6 +121,8 @@ namespace Haphrain
                     x.Content = "";
                     x.Embed = eb.Build();
                 });
+                await p.PollMessage.Channel.SendMessageAsync("Poll closed", false, eb.Build());
+                await p.PollMessage.DeleteAsync();
                 if (Polls.Contains(p)) Polls.Remove(p);
             }
             t.StartTimer(handler, duration*1000);

@@ -60,7 +60,7 @@ namespace Haphrain
             Client.ReactionRemoved += Client_ReactionRemoved;
 
             string Token = "";
-            using (var s = new FileStream((Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)).Replace(@"bin\Debug\netcoreapp2.1", @"Data\Token.txt"), FileMode.Open, FileAccess.Read))
+            using (var s = new FileStream((Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)).Replace(@"bin\Debug\netcoreapp2.2", @"Data\Token.txt"), FileMode.Open, FileAccess.Read))
             {
                 using (var r = new StreamReader(s))
                 {
@@ -94,7 +94,7 @@ namespace Haphrain
                 if (tMsg != null)
                 {
                     XmlDocument doc = new XmlDocument();
-                    doc.Load(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.1", @"Data\Guilds.xml"));
+                    doc.Load(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.2", @"Data\Guilds.xml"));
                     var guildNode = doc.SelectSingleNode($"/Guilds/Guild[@GuildID='{guildID}']");
                     var optionsNode = guildNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "Options");
                     var channelNode = optionsNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "LogChannelID");
@@ -349,7 +349,7 @@ namespace Haphrain
         private async Task UpdateActivity()
         {
             string activity = "";
-            using (var s = new FileStream((Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)).Replace(@"bin\Debug\netcoreapp2.1", @"Data\Activity.txt"), FileMode.Open, FileAccess.Read))
+            using (var s = new FileStream((Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)).Replace(@"bin\Debug\netcoreapp2.2", @"Data\Activity.txt"), FileMode.Open, FileAccess.Read))
             {
                 using (var r = new StreamReader(s))
                 {
@@ -357,7 +357,7 @@ namespace Haphrain
                 }
             }
             string version = "";
-            using (var s = new FileStream((Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)).Replace(@"bin\Debug\netcoreapp2.1", @"Data\Version.txt"), FileMode.Open, FileAccess.Read))
+            using (var s = new FileStream((Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)).Replace(@"bin\Debug\netcoreapp2.2", @"Data\Version.txt"), FileMode.Open, FileAccess.Read))
             {
                 using (var r = new StreamReader(s))
                 {

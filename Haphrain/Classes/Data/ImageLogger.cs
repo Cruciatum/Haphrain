@@ -160,8 +160,8 @@ namespace Haphrain.Classes.Data
         {
             Attachment[] attached = msg.Attachments.ToArray();
             var channel = client.GetChannel(logChannelID) as IMessageChannel;
-            string[] imgFileTypes = { ".jpg", ".jpeg", ".gif", ".png" };
-            string path = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.1", @"Images");
+            string[] imgFileTypes = { ".jpg", ".jpeg", ".gif", ".png", ".webp" };
+            string path = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.2", @"Images");
 
             foreach (Attachment a in attached)
             {

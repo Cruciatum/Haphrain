@@ -9,7 +9,7 @@ namespace Haphrain.Classes.Data
 {
     public static class LogWriter
     {
-        public static string LogFileLoc { get { return Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.1", @"Logs\Log"); } }
+        public static string LogFileLoc { get { return Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.2", @"Logs\Log"); } }
 
         public static async Task WriteLogFile(string logMsg)
         {

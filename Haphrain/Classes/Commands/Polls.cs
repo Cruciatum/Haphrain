@@ -110,6 +110,8 @@ namespace Haphrain.Classes.Commands
                 x.Content = "";
                 x.Embed = eb.Build();
             });
+            await p.PollMessage.Channel.SendMessageAsync("Poll closed", false, eb.Build());
+            await p.PollMessage.DeleteAsync();
 
             GlobalVars.Polls.Remove(p);
         }
