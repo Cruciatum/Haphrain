@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -9,7 +10,12 @@ namespace Haphrain.Classes.Data
 {
     public static class LogWriter
     {
-        public static string LogFileLoc { get { return (Constants._WORKDIR_ +  @"\Logs\Log"); } }
+        public static string LogFileLoc {
+            get
+            {
+                return (Constants._WORKDIR_ + Constants.TranslateForOS(@"\Logs\Log"));
+            }
+        }
 
         public static async Task WriteLogFile(string logMsg)
         {

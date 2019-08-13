@@ -2,25 +2,17 @@
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
-using System.Xml;
 
 using Discord;
 using Discord.WebSocket;
 using Discord.Commands;
-using System.Diagnostics;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Haphrain.Classes.HelperObjects;
-using System.Net;
 using Haphrain.Classes.Data;
-using Newtonsoft.Json;
-using Haphrain.Classes.JsonObjects;
 using System.Timers;
-using Haphrain.Classes.Commands;
 using System.Net.Http;
-using IBM.Data.DB2;
 using IBM.Data.DB2.Core;
-using IBM.Data.DB2Types;
 
 namespace Haphrain
 {
@@ -30,8 +22,8 @@ namespace Haphrain
         private CommandService Commands;
         private IServiceProvider Provider;
         private static readonly HttpClient httpClient = new HttpClient();
-        private BotSettings bSettings = new BotSettings(Constants._WORKDIR_ + @"\Data\BotSettings.json");
-        private DBSettings dbSettings = new DBSettings(Constants._WORKDIR_ + @"\Data\DBSettings.json");
+        private BotSettings bSettings = new BotSettings(Constants._WORKDIR_ + Constants.TranslateForOS(@"\Data\BotSettings.json"));
+        private DBSettings dbSettings = new DBSettings(Constants._WORKDIR_ + Constants.TranslateForOS(@"\Data\DBSettings.json"));
 
         static void Main(string[] args) => new Program().MainAsync().GetAwaiter().GetResult();
 
@@ -64,8 +56,9 @@ namespace Haphrain
             Client.ReactionAdded += Client_ReactionAdded;
             Client.ReactionRemoved += Client_ReactionRemoved;
             
-            if (!Directory.Exists(LogWriter.LogFileLoc.Replace(@"Logs\Log", @"Logs\"))) Directory.CreateDirectory(LogWriter.LogFileLoc.Replace(@"Logs\Log", @"Logs\"));
+            if (!Directory.Exists(LogWriter.LogFileLoc.Replace(Constants.TranslateForOS(@"Logs\Log"), Constants.TranslateForOS(@"Logs\")))) Directory.CreateDirectory(LogWriter.LogFileLoc.Replace(Constants.TranslateForOS(@"Logs\Log"), Constants.TranslateForOS(@"Logs\")));
             DBControl.dbSettings = dbSettings;
+            GetSQLData();
 
             await Client.LoginAsync(TokenType.Bot, bSettings.token);
             await Client.StartAsync();
@@ -263,7 +256,7 @@ namespace Haphrain
 
         private async Task Client_Log(LogMessage arg)
         {
-            if (arg.Severity <= (Constants._WORKDIR_.Contains("Live") ? LogSeverity.Info : LogSeverity.Debug))
+            if (arg.Severity <= LogSeverity.Info)
             {
                 if (arg.Exception != null)
                 {
@@ -345,7 +338,7 @@ namespace Haphrain
 
         private async Task UpdateActivity()
         {
-            await Client.SetGameAsync($"{bSettings.activity} {bSettings.version}");
+            await Client.SetGameAsync($"{bSettings.activity.Replace("{count}",Client.Guilds.Count.ToString())} {bSettings.version}");
         }
     }
 }

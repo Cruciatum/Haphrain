@@ -20,7 +20,7 @@ namespace Haphrain.Classes.JsonObjects
     [Serializable]
     internal class SerializedPoll
     {
-        private static readonly string pollPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.2", @"Polls");
+        private static readonly string pollPath = null; //Edit this to use DB
 
         public uint PollId { get; set; }
         public RestUserMessage PollMsg { get; set; }
