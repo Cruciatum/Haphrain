@@ -10,6 +10,7 @@ using Discord.WebSocket;
 
 namespace Haphrain.Classes.Data
 {
+    [Serializable]
     internal class Poll
     {
         internal SocketUser PollCreator { get; set; }
@@ -113,6 +114,7 @@ namespace Haphrain.Classes.Data
         }
     }
 
+    [Serializable]
     internal class PollReaction
     {
         internal string PollVote { get; set; }
@@ -124,6 +126,7 @@ namespace Haphrain.Classes.Data
             User = usr;
         }
     }
+    [Serializable]
     internal class PollOption
     {
         internal string Option { get; set; }

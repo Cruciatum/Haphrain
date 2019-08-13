@@ -19,14 +19,8 @@ namespace Haphrain.Classes.Commands
         {
             if (newPrefix != null && newPrefix != "")
             {
-                XmlDocument doc = new XmlDocument();
-                doc.Load(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.2", @"Data\Guilds.xml"));
-
-                var guildNode = doc.SelectSingleNode($"/Guilds/Guild[@GuildID='{Context.Guild.Id}']");
-                var prefixNode = guildNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "Prefix");
-                prefixNode.InnerText = newPrefix;
-
-                doc.Save(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.2", @"Data\Guilds.xml"));
+                GlobalVars.GuildOptions.Single(x => x.GuildID == Context.Guild.Id).Prefix = newPrefix;
+                DBControl.UpdateDB($"UPDATE Guilds SET Prefix = {newPrefix} WHERE GuildID = {Context.Guild.Id};");
 
                 await Context.Channel.SendMessageAsync($"{Context.User.Mention}, I have updated your server's prefix to {newPrefix}");
             }
@@ -54,13 +48,7 @@ namespace Haphrain.Classes.Commands
         [Command("setup"), Summary("Show settings for this server"), Priority(0), RequireUserPermission(GuildPermission.Administrator, ErrorMessage = "You require Administrator permissions to do this")]
         public async Task ServerSettings()
         {
-            Options guildOptions = new Options();
-            GlobalVars.GuildsFile.Load(GlobalVars.GuildsFileLoc);
-            var guildNode = GlobalVars.GuildsFile.SelectSingleNode($"/Guilds/Guild[@GuildID='{Context.Guild.Id}']");
-            var prefixNode = guildNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "Prefix");
-            var optionsNode = guildNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "Options");
-            guildOptions.LogEmbeds = (optionsNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "LogEmbeds").InnerText == "0") ? false : true;
-            guildOptions.LogAttachments = (optionsNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "LogAttachments").InnerText == "0") ? false : true;
+            Options guildOptions = GlobalVars.GuildOptions.Single(x => x.GuildID == Context.Guild.Id).Options;
 
 
             EmbedBuilder builder = new EmbedBuilder();
@@ -86,19 +74,15 @@ namespace Haphrain.Classes.Commands
         [Command("set logchannel"), Alias("set lc"), Summary("Setup the channel for logging stuff"), RequireUserPermission(GuildPermission.Administrator, ErrorMessage = "You require Administrator permissions to do this")]
         public async Task SetupLogChannel()
         {
-            XmlDocument doc = new XmlDocument();
-            doc.Load(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.2", @"Data\Guilds.xml"));
-            var guildNode = doc.SelectSingleNode($"/Guilds/Guild[@GuildID='{Context.Guild.Id}']");
-            var optionsNode = guildNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "Options");
-            var channelNode = optionsNode.ChildNodes.Cast<XmlNode>().SingleOrDefault(n => n.Name == "LogChannelID");
+            Options guildOptions = GlobalVars.GuildOptions.Single(x => x.GuildID == Context.Guild.Id).Options;
             RestUserMessage msg;
-            if (channelNode.InnerText == "0")
+            if (guildOptions.LogChannelID == 0)
             {
                 msg = await Context.Channel.SendMessageAsync($"{Context.User.Mention}: Do you wish this channel to be used for logging?");
             }
             else
             {
-                msg = await Context.Channel.SendMessageAsync($"{Context.User.Mention}: Do you wish to change the logging channel from {MentionUtils.MentionChannel(ulong.Parse(channelNode.InnerText))} to {MentionUtils.MentionChannel(Context.Channel.Id)}?");
+                msg = await Context.Channel.SendMessageAsync($"{Context.User.Mention}: Do you wish to change the logging channel from {MentionUtils.MentionChannel(guildOptions.LogChannelID)} to {MentionUtils.MentionChannel(Context.Channel.Id)}?");
             }
             GlobalVars.AddLogChannelTracker(msg, Context.Message.Author.Id);
             await msg.AddReactionsAsync(new Emoji[] { new Emoji("✅"), new Emoji("🚫") });

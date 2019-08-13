@@ -20,8 +20,7 @@ namespace Haphrain
     {
         internal static DiscordSocketClient Client { get; set; }
 
-        internal readonly static string GuildsFileLoc = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.2", @"Data\Guilds.xml");
-        internal static XmlDocument GuildsFile { get; set; } = new XmlDocument();
+        internal static List<GuildOption> GuildOptions { get; set; } = new List<GuildOption>();
 
         internal static List<TrackedMessage> TrackedLogChannelMessages { get; set; } = new List<TrackedMessage>(); //For changing log channel
         internal static List<TrackedMessage> TrackedSettingsMessages { get; set; } = new List<TrackedMessage>(); //For changing settings
