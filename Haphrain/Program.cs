@@ -12,6 +12,7 @@ using Haphrain.Classes.HelperObjects;
 using Haphrain.Classes.Data;
 using System.Timers;
 using System.Net.Http;
+
 using IBM.Data.DB2.Core;
 
 namespace Haphrain
@@ -22,18 +23,23 @@ namespace Haphrain
         private CommandService Commands;
         private IServiceProvider Provider;
         private static readonly HttpClient httpClient = new HttpClient();
-        private BotSettings bSettings = new BotSettings(Constants._WORKDIR_ + Constants.TranslateForOS(@"\Data\BotSettings.json"));
-        private DBSettings dbSettings = new DBSettings(Constants._WORKDIR_ + Constants.TranslateForOS(@"\Data\DBSettings.json"));
+        private BotSettings bSettings;
+        private DBSettings dbSettings;
 
         static void Main(string[] args) => new Program().MainAsync().GetAwaiter().GetResult();
 
         private async Task MainAsync()
         {
+            var res = Setup.GetFiles(bSettings, dbSettings);
+            res.Wait();
+            bSettings = res.Result.botSettings;
+            dbSettings = res.Result.dbSettings;
+
             Client = new DiscordSocketClient(new DiscordSocketConfig
             {
                 LogLevel = LogSeverity.Debug
             });
-            
+
             Commands = new CommandService(new CommandServiceConfig
             {
                 CaseSensitiveCommands = false,
@@ -55,9 +61,13 @@ namespace Haphrain
             Client.LeftGuild += Client_LeftGuild;
             Client.ReactionAdded += Client_ReactionAdded;
             Client.ReactionRemoved += Client_ReactionRemoved;
-            
-            if (!Directory.Exists(LogWriter.LogFileLoc.Replace(Constants.TranslateForOS(@"Logs\Log"), Constants.TranslateForOS(@"Logs\")))) Directory.CreateDirectory(LogWriter.LogFileLoc.Replace(Constants.TranslateForOS(@"Logs\Log"), Constants.TranslateForOS(@"Logs\")));
+
+            if (!Directory.Exists(LogWriter.LogFileLoc.Replace(Constants.TranslateForOS(@"Logs\Log"), Constants.TranslateForOS(@"Logs\"))))
+            {
+                Directory.CreateDirectory(LogWriter.LogFileLoc.Replace(Constants.TranslateForOS(@"Logs\Log"), Constants.TranslateForOS(@"Logs\")));
+            }
             DBControl.dbSettings = dbSettings;
+
             GetSQLData();
 
             await Client.LoginAsync(TokenType.Bot, bSettings.token);
@@ -65,7 +75,7 @@ namespace Haphrain
 
             Timer t = new Timer();
             t.AutoReset = true;
-            async void handler (object sender, ElapsedEventArgs e)
+            async void handler(object sender, ElapsedEventArgs e)
             {
                 foreach (Poll p in GlobalVars.Polls)
                     await p.Update();
@@ -86,7 +96,7 @@ namespace Haphrain
             DB2Connection conn = new DB2Connection();
             conn.ConnectionString = sBuilder.ConnectionString;
 
-            
+
             using (conn)
             {
                 conn.Open();
@@ -282,7 +292,7 @@ namespace Haphrain
         {
             var msg = arg as SocketUserMessage;
             if (msg.Content.Length <= 1 && msg.Embeds.Count == 0 && msg.Attachments.Count == 0) return;
-            
+
             var context = new SocketCommandContext(Client, msg);
             var guildOptions = GlobalVars.GuildOptions.Single(x => x.GuildID == context.Guild.Id);
 
@@ -338,7 +348,7 @@ namespace Haphrain
 
         private async Task UpdateActivity()
         {
-            await Client.SetGameAsync($"{bSettings.activity.Replace("{count}",Client.Guilds.Count.ToString())} {bSettings.version}");
+            await Client.SetGameAsync($"{bSettings.activity.Replace("{count}", Client.Guilds.Count.ToString())} {bSettings.version}");
         }
     }
 }

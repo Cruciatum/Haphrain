@@ -1,7 +1,4 @@
 ﻿using IBM.Data.DB2.Core;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Haphrain.Classes.HelperObjects
 {
