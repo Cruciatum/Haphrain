@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Haphrain.Classes.Data
@@ -13,7 +9,7 @@ namespace Haphrain.Classes.Data
         public static string LogFileLoc {
             get
             {
-                return (Constants._WORKDIR_ + Constants.TranslateForOS(@"\Logs\Log"));
+                return (Constants._WORKDIR_ + $"{Constants.slashType}Logs{Constants.slashType}Log");
             }
         }
 

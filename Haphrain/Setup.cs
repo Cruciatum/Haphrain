@@ -17,48 +17,48 @@ namespace Haphrain
         {
             using (var dbClient = new DropboxClient(Constants._DBTOKEN_))
             {
-                if (File.Exists(Constants._WORKDIR_ + Constants.TranslateForOS(@"\Data\BotSettings.json")))
+                if (File.Exists(Constants._WORKDIR_ + $"{Constants.slashType}Data{Constants.slashType}BotSettings.json"))
                 {
-                    bSettings = new BotSettings(Constants._WORKDIR_ + Constants.TranslateForOS(@"\Data\BotSettings.json"));
+                    bSettings = new BotSettings(Constants._WORKDIR_ + $"{Constants.slashType}Data{Constants.slashType}BotSettings.json");
                 }
                 else
                 {
-                    if (!Directory.Exists(Constants._WORKDIR_ + Constants.TranslateForOS(@"\Data")))
+                    if (!Directory.Exists(Constants._WORKDIR_ +$"{Constants.slashType}Data"))
                     {
-                        Directory.CreateDirectory(Constants._WORKDIR_ + Constants.TranslateForOS(@"\Data"));
+                        Directory.CreateDirectory(Constants._WORKDIR_ + $"{Constants.slashType}Data");
                     }
                     using (var response = await dbClient.Files.DownloadAsync("/Data/BotSettings.json"))
                     {
-                        var f = File.Create(Constants._WORKDIR_ + Constants.TranslateForOS(@"\Data\BotSettings.json"));
+                        var f = File.Create(Constants._WORKDIR_ + $"{Constants.slashType}Data{Constants.slashType}BotSettings.json");
                         using (var rw = new StreamWriter(f))
                         {
-                            Console.WriteLine($"Creating file {Constants._WORKDIR_ + Constants.TranslateForOS(@"\Data\BotSettings.json")}");
+                            Console.WriteLine($"Creating file {Constants._WORKDIR_ + $"{Constants.slashType}Data{Constants.slashType}BotSettings.json"}");
                             rw.Write(await response.GetContentAsStringAsync());
                         }
                     }
-                    bSettings = new BotSettings(Constants._WORKDIR_ + Constants.TranslateForOS(@"\Data\BotSettings.json"));
+                    bSettings = new BotSettings(Constants._WORKDIR_ + $"{Constants.slashType}Data{Constants.slashType}BotSettings.json");
                 }
 
-                if (File.Exists(Constants._WORKDIR_ + Constants.TranslateForOS(@"\Data\DBSettings.json")))
+                if (File.Exists(Constants._WORKDIR_ + $"{Constants.slashType}Data{Constants.slashType}DBSettings.json"))
                 {
-                    dbSettings = new DBSettings(Constants._WORKDIR_ + Constants.TranslateForOS(@"\Data\DBSettings.json"));
+                    dbSettings = new DBSettings(Constants._WORKDIR_ + $"{Constants.slashType}Data{Constants.slashType}DBSettings.json");
                 }
                 else
                 {
-                    if (!Directory.Exists(Constants._WORKDIR_ + Constants.TranslateForOS(@"\Data")))
+                    if (!Directory.Exists(Constants._WORKDIR_ + $"{Constants.slashType}Data"))
                     {
-                        Directory.CreateDirectory(Constants._WORKDIR_ + Constants.TranslateForOS(@"\Data"));
+                        Directory.CreateDirectory(Constants._WORKDIR_ + $"{Constants.slashType}Data");
                     }
                     using (var response = await dbClient.Files.DownloadAsync("/Data/DBSettings.json"))
                     {
-                        var f = File.Create(Constants._WORKDIR_ + Constants.TranslateForOS(@"\Data\DBSettings.json"));
+                        var f = File.Create(Constants._WORKDIR_ + $"{Constants.slashType}Data{Constants.slashType}DBSettings.json");
                         using (var rw = new StreamWriter(f))
                         {
-                            Console.WriteLine($"Creating file {Constants._WORKDIR_ + Constants.TranslateForOS(@"\Data\DBSettings.json")}");
+                            Console.WriteLine($"Creating file {Constants._WORKDIR_ + $"{Constants.slashType}Data{Constants.slashType}DBSettings.json"}");
                             rw.Write(await response.GetContentAsStringAsync());
                         }
                     }
-                    dbSettings = new DBSettings(Constants._WORKDIR_ + Constants.TranslateForOS(@"\Data\DBSettings.json"));
+                    dbSettings = new DBSettings(Constants._WORKDIR_ + $"{Constants.slashType}Data{Constants.slashType}DBSettings.json");
                 }
 
                 //if (Environment.OSVersion.Platform == PlatformID.Unix)

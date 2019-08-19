@@ -62,9 +62,9 @@ namespace Haphrain
             Client.ReactionAdded += Client_ReactionAdded;
             Client.ReactionRemoved += Client_ReactionRemoved;
 
-            if (!Directory.Exists(LogWriter.LogFileLoc.Replace(Constants.TranslateForOS(@"Logs\Log"), Constants.TranslateForOS(@"Logs\"))))
+            if (!Directory.Exists(LogWriter.LogFileLoc.Replace($"Logs{Constants.slashType}Log", $"Logs{Constants.slashType}")))
             {
-                Directory.CreateDirectory(LogWriter.LogFileLoc.Replace(Constants.TranslateForOS(@"Logs\Log"), Constants.TranslateForOS(@"Logs\")));
+                Directory.CreateDirectory(LogWriter.LogFileLoc.Replace($"Logs{Constants.slashType}Log", $"Logs{Constants.slashType}"));
             }
             DBControl.dbSettings = dbSettings;
 
