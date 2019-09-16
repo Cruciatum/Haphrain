@@ -15,6 +15,7 @@ using System.Net.Http;
 
 using System.Data.SqlClient;
 using System.Collections.Generic;
+using Haphrain.Classes.Commands;
 
 namespace Haphrain
 {
@@ -144,6 +145,17 @@ namespace Haphrain
                 {
                     var user = await Classes.Commands.CustomUserTypereader.GetUserFromID(Convert.ToUInt64(dr.GetValue(0)), Client.Guilds);
                     GlobalVars.IgnoredUsers.Add(Convert.ToUInt64(dr.GetValue(0)), user);
+                }
+                dr.Close();
+                #endregion
+
+                #region Get Emotes
+                cmd.CommandText = $"SELECT * FROM Emotes";
+                dr = cmd.ExecuteReader();
+                while (dr.Read())
+                {
+                    ApprovedEmote ae = new ApprovedEmote(dr.GetValue(0).ToString(),dr.GetValue(3).ToString(),dr.GetValue(2).ToString(),Convert.ToBoolean(dr.GetValue(4)), dr.GetValue(5).ToString());
+                    GlobalVars.EmoteList.Add(ae.EmoteID, ae);
                 }
                 dr.Close();
                 #endregion
@@ -316,16 +328,18 @@ namespace Haphrain
         private async Task Client_MessageReceived(SocketMessage arg)
         {
             var msg = arg as SocketUserMessage;
-            if (msg.Content.Length <= 1 && msg.Embeds.Count == 0 && msg.Attachments.Count == 0) return;
-
             var context = new SocketCommandContext(Client, msg);
 
-            if (msg.Content.ToLower().Substring(0,2) == "hi" && msg.Author.Id == 489410442029039657) { await context.Channel.SendMessageAsync($"Well hey there beautiful {msg.Author.Mention}"); return; } //Secret message to someone :>
+            if (msg.Content.Length <= 1 && msg.Embeds.Count == 0 && msg.Attachments.Count == 0) return;
+            if (context.User.IsBot) return;
+
+            if (msg.Content.Length>=2)
+                if (msg.Content.ToLower().Substring(0,2) == "hi" && msg.Author.Id == 489410442029039657) { await context.Channel.SendMessageAsync($"Well hey there beautiful {msg.Author.Mention}"); return; } //Secret message to someone :>
 
             var guildOptions = GlobalVars.GuildOptions.Single(x => x.GuildID == context.Guild.Id);
 
             if ((context.Message == null || context.Message.Content == "") && arg.Attachments.Count == 0 && arg.Embeds.Count == 0) return;
-            if (context.User.IsBot) return;
+            
             if (GlobalVars.IgnoredUsers.ContainsKey(context.Message.Author.Id)) return;
 
             int argPos = 0;
