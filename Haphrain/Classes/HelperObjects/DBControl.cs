@@ -1,27 +1,30 @@
-﻿using IBM.Data.DB2.Core;
+﻿using System.Data.SqlClient;
 
 namespace Haphrain.Classes.HelperObjects
 {
     internal static class DBControl
     {
-        static DB2ConnectionStringBuilder sBuilder = new DB2ConnectionStringBuilder();
-        static DB2Connection conn = new DB2Connection();
+        static SqlConnectionStringBuilder sBuilder = new SqlConnectionStringBuilder();
+        static SqlConnection conn = new SqlConnection();
         internal static DBSettings dbSettings;
         
 
         internal static void UpdateDB(string sql)
         {
-            sBuilder.Database = dbSettings.db;
+            //Load prefix & options from DB
+            sBuilder.InitialCatalog = dbSettings.db;
             sBuilder.UserID = dbSettings.username;
             sBuilder.Password = dbSettings.password;
-            sBuilder.Server = dbSettings.host + ":" + dbSettings.port;
+            sBuilder.DataSource = dbSettings.host + @"\" + dbSettings.instance + "," + dbSettings.port;
+            sBuilder.ConnectTimeout = 30;
+            sBuilder.IntegratedSecurity = false;
             conn.ConnectionString = sBuilder.ConnectionString;
 
             using (conn)
             {
                 conn.Open();
 
-                DB2Command cmd = new DB2Command(sql, conn);
+                SqlCommand cmd = new SqlCommand(sql, conn);
                 cmd.ExecuteNonQuery();
 
                 conn.Close(); conn.Dispose();
