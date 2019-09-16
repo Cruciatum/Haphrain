@@ -13,17 +13,6 @@ namespace Haphrain.Classes.Commands
     {
         private string[] SupportedUnitsDist = new string[] { "km", "m", "cm", "mm", "mi", "yd", "ft", "inch" };
         private string[] SupportesUnitsLiq = new string[] { "l", "dl","cl","ml", "gal","oz" };
-        [Command("convert"), Summary("Convert from 1 unit measure to another"), Priority(1)]
-        public async Task MainConvert()
-        {
-            EmbedBuilder builder = new EmbedBuilder() { Title = "Available unit conversions:" };
-            builder.AddField("Distance Conversion", $"{Context.Message.Content.Substring(0, 1)}convert dist # <start unit> <end unit> [Supported units: km/m/cm/mm; mi/yd/ft/inch]");
-            builder.AddField("Temperature Conversion", $"{Context.Message.Content.Substring(0, 1)}convert temp # <start unit> <end unit> [Supported units: C/F/K]");
-            builder.AddField("Liquid Measure Conversion", $"{Context.Message.Content.Substring(0, 1)}convert liq # <start unit> <end unit> [Supported units: l/dl/cl/ml; gal/oz]");
-
-            await Context.Channel.SendMessageAsync(null, false, builder.Build());
-        }
-
         [Command("convert dist"), Summary("Convert from Metric to Imperial and back"), Priority(2)]
         public async Task ConvertMetricImp(string convertAmt, string StartUnit, string EndUnit)
         {

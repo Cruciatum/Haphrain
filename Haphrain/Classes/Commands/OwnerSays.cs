@@ -100,6 +100,7 @@ namespace Haphrain.Classes.Commands
                 GlobalVars.AddRandomTracker(msg, 5);
             }
         }
+
         [Command("friend remove"), Alias("fr", "f remove", "friend r"), Summary("Add a friend to the bot"), RequireOwner]
         public async Task RemoveFriend(ulong friendID)
         {

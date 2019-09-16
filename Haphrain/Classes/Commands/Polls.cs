@@ -13,18 +13,6 @@ namespace Haphrain.Classes.Commands
 {
     public class Polls : ModuleBase<SocketCommandContext>
     {
-        [Command("poll"), Summary("Show options related to polls")]
-        public async Task PollSummary()
-        {
-            EmbedBuilder eb = new EmbedBuilder();
-            eb.WithTitle("Available options:");
-            eb.AddField("poll create <question> | <timecode> | <option> | <option> | [<option>] | [<option>] [<option>]", "Create a new poll in this channel\n**Timecode**: #(d/h)\n__MIN__ 2 options \n__MAX__ 5 options");
-            eb.AddField("poll close <id>", "Close a poll with the given ID");
-            eb.AddField("poll reset <id>", "Delete all votes from a poll & have me re-post it.");
-
-            await Context.Channel.SendMessageAsync(null, false, eb.Build());
-        }
-
         [Command("poll create"), Summary("Show options related to polls")]
         public async Task PollCreate([Remainder]string parameters)
         {
