@@ -20,7 +20,7 @@ namespace Haphrain.Classes.Commands
             if (newPrefix != null && newPrefix != "")
             {
                 GlobalVars.GuildOptions.Single(x => x.GuildID == Context.Guild.Id).Prefix = newPrefix;
-                DBControl.UpdateDB($"UPDATE Guilds SET Prefix = {newPrefix} WHERE GuildID = {Context.Guild.Id};");
+                DBControl.UpdateDB($"UPDATE Guilds SET Prefix = '{newPrefix}' WHERE GuildID = {Context.Guild.Id};");
 
                 await Context.Channel.SendMessageAsync($"{Context.User.Mention}, I have updated your server's prefix to {newPrefix}");
             }
