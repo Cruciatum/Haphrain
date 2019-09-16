@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Haphrain.Classes.HelperObjects;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -77,6 +78,86 @@ namespace Haphrain.Classes.Commands
             {
                 foreach (EmbedBuilder builder in eb)
                     await dmChan.SendMessageAsync($"{guild.Name}({guildID}) - {eb.IndexOf(builder)+1}/{eb.Count}", false, builder.Build());
+            }
+        }
+
+        [Command("friend add"), Alias("fa", "f add", "friend a"), Summary("Add a friend to the bot"), RequireOwner]
+        public async Task AddFriend(ulong friendID)
+        {
+            var user = await CustomUserTypereader.GetUserFromID(friendID, Context.Client.Guilds);
+            if (user != null)
+            {
+                GlobalVars.FriendUsers.Add(friendID, user);
+
+                string sql = $"INSERT INTO Friends (UserID, DateAdded) VALUES ({friendID},'{DateTime.Now.Day}-{DateTime.Now.Month}-{DateTime.Now.Year}')";
+                DBControl.UpdateDB(sql);
+
+                await Context.Channel.SendMessageAsync($"Added user {user.Mention} as a friend.\nThey will no longer be timed out and will have more privileges in the future.");
+            }
+            else
+            {
+                var msg = await Context.Channel.SendMessageAsync($"User not found (ID: {friendID}");
+                GlobalVars.AddRandomTracker(msg, 5);
+            }
+        }
+        [Command("friend remove"), Alias("fr", "f remove", "friend r"), Summary("Add a friend to the bot"), RequireOwner]
+        public async Task RemoveFriend(ulong friendID)
+        {
+            GlobalVars.FriendUsers.TryGetValue(friendID, out IUser user);
+            if (user != null)
+            {
+                GlobalVars.FriendUsers.Remove(friendID);
+
+                string sql = $"DELETE FROM Friends WHERE UserID = {friendID}";
+                DBControl.UpdateDB(sql);
+
+                await Context.Channel.SendMessageAsync($"Removed user {user.Mention} from my friends list.");
+            }
+            else
+            {
+                var msg = await Context.Channel.SendMessageAsync($"User is not a friend (ID: {friendID})");
+                GlobalVars.AddRandomTracker(msg, 5);
+            }
+        }
+
+
+        [Command("ignore add"), Alias("ia","i add", "ignore a"), Summary("Ignore a user due to abuse"), RequireOwner]
+        public async Task AddIgnore(ulong idiotID)
+        {
+            var user = await CustomUserTypereader.GetUserFromID(idiotID, Context.Client.Guilds);
+            if (user != null)
+            {
+                GlobalVars.IgnoredUsers.Add(idiotID, user);
+
+                string sql = $"INSERT INTO Ignores (UserID, DateAdded) VALUES ({idiotID},'{DateTime.Now.Day}-{DateTime.Now.Month}-{DateTime.Now.Year}')";
+                DBControl.UpdateDB(sql);
+
+                await Context.Channel.SendMessageAsync($"Added user {user.Mention} to the ignore list.\nThey will now be ignored by me.");
+            }
+            else
+            {
+                var msg = await Context.Channel.SendMessageAsync($"User not found (ID: {idiotID})");
+                GlobalVars.AddRandomTracker(msg, 5);
+            }
+        }
+
+        [Command("ignore remove"), Alias("ir", "i remove", "ignore r"), Summary("Ignore a user due to abuse"), RequireOwner]
+        public async Task RemoveIgnore(ulong idiotID)
+        {
+            GlobalVars.IgnoredUsers.TryGetValue(idiotID, out IUser user);
+            if (user != null)
+            {
+                GlobalVars.IgnoredUsers.Remove(idiotID);
+
+                string sql = $"DELETE FROM Ignores WHERE UserID = {idiotID}";
+                DBControl.UpdateDB(sql);
+
+                await Context.Channel.SendMessageAsync($"Removed user {user.Mention} from the ignore list.\nThey can now use commands again.");
+            }
+            else
+            {
+                var msg = await Context.Channel.SendMessageAsync($"User not ignored (ID: {idiotID})");
+                GlobalVars.AddRandomTracker(msg, 5);
             }
         }
     }
