@@ -4,6 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
+
+using Newtonsoft.Json;
+
 using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
@@ -81,10 +84,23 @@ namespace Haphrain.Classes.Data
 
         internal async Task Update()
         {
-            await PollMessage.ModifyAsync(x => {
-                x.Content = "";
-                x.Embed = CreatePollEmbed();
-            });
+            try
+            {
+                await PollMessage.ModifyAsync(x =>
+                {
+                    x.Content = "";
+                    x.Embed = CreatePollEmbed();
+                });
+            }
+            catch (Discord.Net.HttpException e)
+            {
+                Console.WriteLine($"EXCEPTION: {(e.DiscordCode.HasValue ? e.DiscordCode : null)} - [{e.HResult}] {e.Reason}");
+                await LogWriter.WriteLogFile($"EXCEPTION: {(e.DiscordCode.HasValue ? e.DiscordCode : null)} - [{e.HResult}] {e.Reason}");
+                Console.WriteLine($"Request: {JsonConvert.SerializeObject(e.Request.Options)}");
+                await LogWriter.WriteLogFile($"Request: {JsonConvert.SerializeObject(e.Request.Options)}");
+                Console.WriteLine($"{e.StackTrace}");
+                await LogWriter.WriteLogFile($"{e.StackTrace}");
+            }
         }
 
         private static readonly Random r = new Random();
