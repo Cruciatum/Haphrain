@@ -13,7 +13,8 @@ using Haphrain.Classes.Data;
 using System.Timers;
 using System.Net.Http;
 
-using IBM.Data.DB2.Core;
+using System.Data.SqlClient;
+using System.Collections.Generic;
 
 namespace Haphrain
 {
@@ -68,8 +69,6 @@ namespace Haphrain
             }
             DBControl.dbSettings = dbSettings;
 
-            GetSQLData();
-
             await Client.LoginAsync(TokenType.Bot, bSettings.token);
             await Client.StartAsync();
 
@@ -85,25 +84,27 @@ namespace Haphrain
             await Task.Delay(-1);
         }
 
-        private void GetSQLData()
+        private async Task GetSQLData()
         {
             //Load prefix & options from DB
-            DB2ConnectionStringBuilder sBuilder = new DB2ConnectionStringBuilder();
-            sBuilder.Database = dbSettings.db;
+            SqlConnectionStringBuilder sBuilder = new SqlConnectionStringBuilder();
+            sBuilder.InitialCatalog = dbSettings.db;
             sBuilder.UserID = dbSettings.username;
             sBuilder.Password = dbSettings.password;
-            sBuilder.Server = dbSettings.host + ":" + dbSettings.port;
-            DB2Connection conn = new DB2Connection();
+            sBuilder.DataSource = dbSettings.host + @"\" + dbSettings.instance + "," + dbSettings.port;
+            sBuilder.ConnectTimeout = 30;
+            sBuilder.IntegratedSecurity = false;
+            SqlConnection conn = new SqlConnection();
+
             conn.ConnectionString = sBuilder.ConnectionString;
-
-
+            
             using (conn)
             {
                 conn.Open();
 
                 #region Get Guilds
-                DB2Command cmd = new DB2Command($"SELECT * FROM Guilds", conn);
-                DB2DataReader dr = cmd.ExecuteReader();
+                SqlCommand cmd = new SqlCommand($"SELECT * FROM Guilds", conn);
+                SqlDataReader dr = cmd.ExecuteReader();
 
                 while (dr.Read())
                 {
@@ -122,6 +123,29 @@ namespace Haphrain
 
                     GlobalVars.GuildOptions.Add(go);
                 }
+                dr.Close();
+                #endregion
+
+                #region Get Friends
+                cmd.CommandText = $"SELECT UserID FROM Friends";
+                dr = cmd.ExecuteReader();
+                while (dr.Read())
+                {
+                    var user = await Classes.Commands.CustomUserTypereader.GetUserFromID(Convert.ToUInt64(dr.GetValue(0)), Client.Guilds);
+                    GlobalVars.FriendUsers.Add(Convert.ToUInt64(dr.GetValue(0)), user);
+                }
+                dr.Close();
+                #endregion
+
+                #region Get Idiots
+                cmd.CommandText = $"SELECT UserID FROM Ignores";
+                dr = cmd.ExecuteReader();
+                while (dr.Read())
+                {
+                    var user = await Classes.Commands.CustomUserTypereader.GetUserFromID(Convert.ToUInt64(dr.GetValue(0)), Client.Guilds);
+                    GlobalVars.IgnoredUsers.Add(Convert.ToUInt64(dr.GetValue(0)), user);
+                }
+                dr.Close();
                 #endregion
 
                 conn.Close();
@@ -162,7 +186,7 @@ namespace Haphrain
                         if (reaction.Emote.Name == "\u0031\u20E3")
                         {
                             guildOptions.LogEmbeds = !guildOptions.LogEmbeds;
-                            DBControl.UpdateDB($"UPDATE Guilds SET LogEmbeds = {guildOptions.LogEmbeds} WHERE GuildID = {guildID};");
+                            DBControl.UpdateDB($"UPDATE Guilds SET LogEmbeds = {(guildOptions.LogEmbeds?1:0)} WHERE GuildID = {guildID};");
                             if (!guildOptions.LogEmbeds)
                             {
                                 await channel.SendMessageAsync("Now logging messages with embeds.");
@@ -172,7 +196,7 @@ namespace Haphrain
                         else if (reaction.Emote.Name == "\u0032\u20E3")
                         {
                             guildOptions.LogAttachments = !guildOptions.LogAttachments;
-                            DBControl.UpdateDB($"UPDATE Guilds SET LogAttachments = {guildOptions.LogAttachments} WHERE GuildID = {guildID};");
+                            DBControl.UpdateDB($"UPDATE Guilds SET LogAttachments = {(guildOptions.LogAttachments?1:0)} WHERE GuildID = {guildID};");
                             if (!guildOptions.LogAttachments)
                             {
                                 await channel.SendMessageAsync("Now logging messages with attachments.");
@@ -221,7 +245,7 @@ namespace Haphrain
         {
             foreach (SocketGuild g in Client.Guilds)
             {
-                if (GlobalVars.GuildOptions.Where(x => x.GuildID == g.Id) == null)
+                if (GlobalVars.GuildOptions.SingleOrDefault(x => x.GuildID == g.Id) == null)
                 {
                     await Client_JoinedGuild(g);
                 }
@@ -258,7 +282,7 @@ namespace Haphrain
             go.Options = o;
             GlobalVars.GuildOptions.Add(go);
 
-            DBControl.UpdateDB($"INSERT INTO Guilds VALUES ({go.GuildID.ToString()}, {go.GuildName},{go.OwnerID.ToString()},{go.Prefix},{go.Options.LogChannelID.ToString()}, {go.Options.LogEmbeds}, {go.Options.LogAttachments});");
+            DBControl.UpdateDB($"INSERT INTO Guilds (GuildID,GuildName,OwnerID,Prefix,LogChannelID,LogEmbeds,LogAttachments) VALUES ({go.GuildID.ToString()}, '{go.GuildName.Replace(@"'","")}',{go.OwnerID.ToString()},'{go.Prefix}',{go.Options.LogChannelID.ToString()}, {(go.Options.LogEmbeds ? 1:0)}, {(go.Options.LogAttachments ? 1:0)});");
 
             await UpdateActivity();
             await Task.Delay(100);
@@ -283,6 +307,7 @@ namespace Haphrain
 
         private async Task Client_Ready()
         {
+            await GetSQLData();
             await UpdateActivity();
             await CheckGuildsStartup();
             await Client_Log(new LogMessage(LogSeverity.Info, "Client_Ready", "Bot ready!"));
@@ -294,10 +319,14 @@ namespace Haphrain
             if (msg.Content.Length <= 1 && msg.Embeds.Count == 0 && msg.Attachments.Count == 0) return;
 
             var context = new SocketCommandContext(Client, msg);
+
+            if (msg.Content.ToLower().Substring(0,2) == "hi" && msg.Author.Id == 489410442029039657) { await context.Channel.SendMessageAsync($"Well hey there beautiful {msg.Author.Mention}"); return; } //Secret message to someone :>
+
             var guildOptions = GlobalVars.GuildOptions.Single(x => x.GuildID == context.Guild.Id);
 
             if ((context.Message == null || context.Message.Content == "") && arg.Attachments.Count == 0 && arg.Embeds.Count == 0) return;
             if (context.User.IsBot) return;
+            if (GlobalVars.IgnoredUsers.ContainsKey(context.Message.Author.Id)) return;
 
             int argPos = 0;
 
@@ -311,7 +340,8 @@ namespace Haphrain
 
             if (!(msg.HasStringPrefix(guildOptions.Prefix, ref argPos)) && !(msg.HasMentionPrefix(Client.CurrentUser, ref argPos))) return;
 
-            if (!(await GlobalVars.CheckUserTimeout(context.Message.Author, context.Guild.Id, context.Channel))) return;
+
+            if (!await GlobalVars.CheckUserTimeout(context.Message.Author, context.Guild.Id, context.Channel)) return;
             IResult Result = null;
             try
             {
@@ -326,8 +356,6 @@ namespace Haphrain
                     if (Result.ErrorReason.ToLower().Contains("unknown command"))
                     {
                         await Client_Log(new LogMessage(LogSeverity.Error, "Client_MessageReceived", $"Unknown command sent by {context.Message.Author.ToString()} in guild: {context.Guild.Id} - Command text: {context.Message.Content}"));
-                        var errorMsg = await context.Channel.SendMessageAsync($"Sorry, I don't know what I'm supposed to do with that...");
-                        GlobalVars.AddRandomTracker(errorMsg);
                     }
                     else if (Result.ErrorReason.ToLower().Contains("too many param"))
                     {
@@ -338,7 +366,8 @@ namespace Haphrain
                     else
                         await Client_Log(new LogMessage(LogSeverity.Error, "Client_MessageReceived", $"Command text: {context.Message.Content} | Error: {Result.ErrorReason}"));
                 }
-                GlobalVars.AddUserTimeout(context.Message.Author, context.Guild.Id);
+                var x = GlobalVars.UserTimeouts.SingleOrDefault(b => b.TrackedUser.Id == context.Message.Author.Id);
+                if (x == null) GlobalVars.AddUserTimeout(context.Message.Author, context.Guild.Id);
             }
             catch (Exception ex)
             {

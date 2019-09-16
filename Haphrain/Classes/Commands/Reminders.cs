@@ -138,5 +138,26 @@ namespace Haphrain.Classes.Commands
                 throw ex;
             }
         }
+        public static async Task<IUser> GetUserFromID(ulong id, IReadOnlyCollection<IGuild> guilds)
+        {
+            IUser userFound = null;
+            try
+            {
+                foreach (IGuild g in guilds)
+                {
+                    userFound = await g.GetUserAsync(id);
+                    if (userFound != null) break;
+                }
+            }
+            catch (Exception ex)
+            {
+                await LogWriter.WriteLogFile($"ERROR: Exception thrown : {ex.Message}");
+                await LogWriter.WriteLogFile($"{ex.StackTrace}");
+                Console.WriteLine($"Exception: {ex.Message}");
+                throw ex;
+            }
+
+            return userFound;
+        }
     }
 }

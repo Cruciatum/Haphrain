@@ -19,6 +19,10 @@ namespace Haphrain
     internal static class GlobalVars
     {
         internal static DiscordSocketClient Client { get; set; }
+        internal static Random randGenerator = new Random();
+
+        internal static Dictionary<ulong, IUser> FriendUsers = new Dictionary<ulong, IUser>();
+        internal static Dictionary<ulong, IUser> IgnoredUsers = new Dictionary<ulong, IUser>();
 
         internal static List<GuildOption> GuildOptions { get; set; } = new List<GuildOption>();
 
@@ -50,7 +54,7 @@ namespace Haphrain
             t.StartTimer(handler, 60000);
             TrackedSettingsMessages.Add(tMsg);
         }
-        internal static void AddRandomTracker(RestUserMessage msg)
+        internal static void AddRandomTracker(RestUserMessage msg, ulong time = 15)
         {
             var tMsg = new TrackedMessage(msg, 0);
             Timer t = new Timer();
@@ -59,7 +63,7 @@ namespace Haphrain
                 t.Stop();
                 await UntrackMessage(tMsg);
             }
-            t.StartTimer(handler, 15000);
+            t.StartTimer(handler, time * 1000);
             RandomMessages.Add(tMsg);
         }
 
@@ -71,6 +75,9 @@ namespace Haphrain
             var track = new TimeoutTracker(usr, guildID);
             TimeoutTimer tTimer = null;
             Timer t = new Timer();
+
+            ulong timeout = FriendUsers.ContainsKey(usr.Id) ? (ulong)Constants._CMDTIMEOUT_ / 2 : (ulong)Constants._CMDTIMEOUT_;
+
             void handler(object sender, ElapsedEventArgs e)
             {
                 t.Stop();
@@ -80,7 +87,7 @@ namespace Haphrain
                     UserTimeoutTimers.Remove(tTimer);
                 }
             }
-            t.StartTimer(handler, (int)(Constants._CMDTIMEOUT_ * 1000));
+            t.StartTimer(handler, timeout * 1000);
             tTimer = new TimeoutTimer(track);
             UserTimeouts.Add(track);
             UserTimeoutTimers.Add(tTimer);
@@ -91,8 +98,11 @@ namespace Haphrain
             if (Tracker != null)
             {
                 TimeoutTimer t = UserTimeoutTimers.SingleOrDefault(p => p.Tracker == Tracker);
-                var msg = await channel.SendMessageAsync($"Slow down {usr.Username}! Try again in {TimeSpan.FromSeconds((int)Constants._CMDTIMEOUT_ - (DateTime.Now - t.StartTime).TotalSeconds).Seconds}.{(TimeSpan.FromSeconds(5 - (DateTime.Now - t.StartTime).TotalSeconds).Milliseconds) / 100} seconds.");
-                AddRandomTracker((RestUserMessage)msg);
+                int sec = FriendUsers.ContainsKey(usr.Id) ? (int)Constants._CMDTIMEOUT_ / 2 : (int)Constants._CMDTIMEOUT_;
+                TimeSpan ts = DateTime.Now - t.StartTime;
+                TimeSpan remaining = TimeSpan.FromSeconds(sec - ts.TotalSeconds);
+                var msg = await channel.SendMessageAsync($"Slow down {usr.Username}! Try again in {remaining.Seconds}.{remaining.Milliseconds / 100} seconds.");
+                AddRandomTracker((RestUserMessage)msg, remaining.TotalSeconds > 1 ? (ulong)remaining.TotalSeconds : 1);
                 return false;
             }
             return true;
@@ -112,11 +122,12 @@ namespace Haphrain
                 foreach (PollOption s in p.PollOptions)
                 {
                     float amt = p.PollReactions.Count(x => x.PollVote == s.Option);
-                    eb.AddField($"{s.React} {s.Option}", $"{Poll.GetPercentageBar(p, s.Option)} - {amt}/{p.PollReactions.Count} ({amt/p.PollReactions.Count * 100}%)");
+                    eb.AddField($"{s.React} {s.Option}", $"{Poll.GetPercentageBar(p, s.Option)} - {amt}/{p.PollReactions.Count} ({amt / p.PollReactions.Count * 100}%)");
                 }
                 eb.WithColor(255, 0, 0);
 
-                await p.PollMessage.ModifyAsync(x => {
+                await p.PollMessage.ModifyAsync(x =>
+                {
                     x.Content = "";
                     x.Embed = eb.Build();
                 });
@@ -124,7 +135,7 @@ namespace Haphrain
                 await p.PollMessage.DeleteAsync();
                 if (Polls.Contains(p)) Polls.Remove(p);
             }
-            t.StartTimer(handler, duration*1000);
+            t.StartTimer(handler, duration * 1000);
             Polls.Add(p);
         }
 
@@ -137,7 +148,11 @@ namespace Haphrain
 
             if (!msg.IsDeleted)
             {
-                await msg.SourceMessage.DeleteAsync();
+                try
+                {
+                    await msg.SourceMessage.DeleteAsync();
+                }
+                catch { }
                 msg.IsDeleted = true;
             }
         }

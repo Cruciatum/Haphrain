@@ -60,51 +60,6 @@ namespace Haphrain
                     }
                     dbSettings = new DBSettings(Constants._WORKDIR_ + $"{Constants.slashType}Data{Constants.slashType}DBSettings.json");
                 }
-
-                //if (Environment.OSVersion.Platform == PlatformID.Unix)
-                //{
-                //    if (!File.Exists("/home/vcap/app/home/vcap/deps/0/lib/libdb2.so"))
-                //    {
-
-                //        if (!Directory.Exists("/home")) Directory.CreateDirectory("/home");
-                //        if (!Directory.Exists("/home/vcap")) Directory.CreateDirectory("/home/vcap");
-                //        if (!Directory.Exists("/home/vcap/app")) Directory.CreateDirectory("/home/vcap/app");
-                //        if (!Directory.Exists("/home/vcap/app/home")) Directory.CreateDirectory("/home/vcap/app/home");
-                //        if (!Directory.Exists("/home/vcap/app/home/vcap")) Directory.CreateDirectory("/home/vcap/app/home/vcap");
-                //        if (!Directory.Exists("/home/vcap/app/home/vcap/deps")) Directory.CreateDirectory("/home/vcap/app/home/vcap/deps");
-                //        if (!Directory.Exists("/home/vcap/app/home/vcap/deps/0")) Directory.CreateDirectory("/home/vcap/app/home/vcap/deps/0");
-                //        if (!Directory.Exists("/home/vcap/app/home/vcap/deps/0/lib")) Directory.CreateDirectory("/home/vcap/app/home/vcap/deps/0/lib");
-
-                //        var list = dbClient.Files.ListFolderAsync("/lib", true, false, false, false, true);
-                //        list.Wait();
-                //        var resultingList = list.Result;
-                //        var baseDir = "/home/vcap/app/home/vcap/deps/0";
-
-                //        foreach (var i in resultingList.Entries)
-                //        {
-                //            Console.WriteLine($"{(i.IsFile ? "File" : "Directory")} found: {Path.GetDirectoryName(i.PathDisplay).ToLower()}/{i.Name}");
-                //        }
-
-                //        foreach (var dbxFolder in resultingList.Entries.Where(i => i.IsFolder))
-                //        {
-                //            Directory.CreateDirectory(baseDir + Path.GetDirectoryName(dbxFolder.PathDisplay).ToLower());
-                //            Console.WriteLine("Downloaded directory " + baseDir + Path.GetDirectoryName(dbxFolder.PathDisplay).ToLower());
-
-                //        }
-                //        foreach (var dbxFile in resultingList.Entries.Where(i => i.IsFile))
-                //        {
-                //            using (var response = await dbClient.Files.DownloadAsync(Path.GetDirectoryName(dbxFile.PathDisplay).ToLower() + "/" + dbxFile.Name.ToLower()))
-                //            {
-                //                var f = File.Create(baseDir + Path.GetDirectoryName(dbxFile.PathDisplay).ToLower() + "/" + dbxFile.Name.ToLower());
-                //                using (var rw = new StreamWriter(f))
-                //                {
-                //                    rw.Write(await response.GetContentAsStringAsync());
-                //                    Console.WriteLine("Downloaded file " + baseDir + Path.GetDirectoryName(dbxFile.PathDisplay).ToLower() + "/" + dbxFile.Name.ToLower());
-                //                }
-                //            }
-                //        }
-                //    }
-                //}
             }
             var r = new Result();
             r.botSettings = bSettings;

@@ -259,8 +259,5 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
-/Haphrain/Data/Token.txt
-/Haphrain/Data/Guilds.xml
-/Haphrain/Data/Activity.txt
 /Haphrain/Logs
 /Haphrain/HiddenData.cs
