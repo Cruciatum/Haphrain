@@ -19,7 +19,7 @@ namespace Haphrain.Classes.Data
     {
         private static string GfyCatCredential = "";
 
-        private static string GetTenorGIF(string url)
+        public static string GetTenorGIF(string url)
         {
             string gifURL = "";
             string id = url.Remove(0, url.LastIndexOf('-') + 1);
@@ -56,7 +56,7 @@ namespace Haphrain.Classes.Data
             return gifURL;
         }
 
-        private static string GetGfyCatAsync(string url)
+        public static string GetGfyCatAsync(string url)
         {
             string gifURL = "";
             string WEBSERVICE_URL = $"https://api.gfycat.com/v1/gfycats/{url.Replace("https://gfycat.com/", "")}";
@@ -161,11 +161,11 @@ namespace Haphrain.Classes.Data
             Attachment[] attached = msg.Attachments.ToArray();
             var channel = client.GetChannel(logChannelID) as IMessageChannel;
             string[] imgFileTypes = { ".jpg", ".jpeg", ".gif", ".png", ".webp" };
-            string path = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location).Replace(@"bin\Debug\netcoreapp2.2", @"Images");
+            string path = Constants._WORKDIR_ + $"{Constants.slashType}Images";
 
             foreach (Attachment a in attached)
             {
-                string file = path + "\\" + a.Filename;
+                string file = path + Constants.slashType + a.Filename;
                 string ext = Path.GetExtension(a.Url);
                 if (imgFileTypes.Contains(ext.ToLower()))
                 {
