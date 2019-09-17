@@ -49,8 +49,7 @@ namespace Haphrain.Classes.Commands
         public async Task ServerSettings()
         {
             Options guildOptions = GlobalVars.GuildOptions.Single(x => x.GuildID == Context.Guild.Id).Options;
-
-
+            
             EmbedBuilder builder = new EmbedBuilder();
             builder.Title = "Server settings";
             builder.AddField("\u0031\u20E3 Log Embedded messages", $"Currently:{(guildOptions.LogEmbeds ? "True" : "False")}");

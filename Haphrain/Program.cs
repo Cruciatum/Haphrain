@@ -289,7 +289,8 @@ namespace Haphrain
             go.OwnerID = arg.Owner.Id;
             go.Prefix = "]";
             o.LogChannelID = 0;
-            o.LogEmbeds = o.LogAttachments = false;
+            o.LogEmbeds = false;
+            o.LogAttachments = false;
 
             go.Options = o;
             GlobalVars.GuildOptions.Add(go);

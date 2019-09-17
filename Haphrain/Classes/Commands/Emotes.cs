@@ -25,6 +25,12 @@ namespace Haphrain.Classes.Commands
         {
             List<ApprovedEmote> foundEmotes = new List<ApprovedEmote>();
             bool hasUsr = usr == null ? false : true;
+            if (!hasUsr) usr = Context.Client.CurrentUser;
+            if (Context.Message.Author.Id == usr.Id)
+            {
+                await Context.Channel.SendMessageAsync($"Why would you want to {trigger.ToLower()} yourself...?");
+                return;
+            }
 
             //Get all valid emotes for this trigger
             foreach (ApprovedEmote ae in GlobalVars.EmoteList.Values.Where(e => e.Trigger == trigger))
