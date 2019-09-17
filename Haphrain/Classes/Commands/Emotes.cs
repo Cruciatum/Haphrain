@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
+using Discord.Rest;
 using Haphrain.Classes.Data;
 using Haphrain.Classes.HelperObjects;
 using System;
@@ -52,14 +53,22 @@ namespace Haphrain.Classes.Commands
                 if (usr != null)
                     msg = msg.Replace("{target}", usr.Mention);
                 await Context.Channel.SendFileAsync(selected.FilePath, msg);
+                var perms = Context.Guild.GetUser(Context.Client.CurrentUser.Id).GetPermissions(Context.Channel as IGuildChannel);
+                if (perms.ManageMessages)
+                {
+                    try { await Context.Message.DeleteAsync(); }
+                    catch { }
+                }
             }
             else
             {
                 var prefix = GlobalVars.GuildOptions.SingleOrDefault(go => go.GuildID == Context.Guild.Id).Prefix;
                 var tarString = "\"{target}\"";
-                await Context.Channel.SendMessageAsync($"Unknown emote, you can request this by using \n`{prefix}emote request {trigger} <imageURL> <true/false> <printed message>`\n"
+                var m = await Context.Channel.SendMessageAsync($"Unknown emote, you can request this by using \n`{prefix}emote request {trigger} <imageURL> <true/false> <printed message>`\n"
                     + "Insert true if you want this to be a targetted emote, false if you don't\n"
                     + "Specify where you want the (optional) target's name in <printed message> by using " + tarString);
+
+                GlobalVars.AddRandomTracker(m, 30);
             }
         }
 
@@ -95,7 +104,12 @@ namespace Haphrain.Classes.Commands
                     SuccessfulEmotes.Add(er.RequestID);
                     GlobalVars.EmoteList.Add(er.RequestID, new ApprovedEmote(er.RequestID, er.FileExtension, er.Trigger, er.RequiresTarget, er.OutputText));
                     GlobalVars.EmoteRequests.Remove(er.RequestID);
-                    string sql = $"INSERT INTO Emotes (EmoteID, RequestedBy, EmoteTrigger, fExt, RequireTarget, OutputText) VALUES ('{er.RequestID}', {er.RequestedBy}, '{er.Trigger}', '{er.FileExtension}', {(er.RequiresTarget ? 1:0)}, '{er.OutputText}');";
+                    if (GlobalVars.RequestMessage.TryGetValue(er.RequestID, out var msg))
+                    {
+                        GlobalVars.RequestMessage.Remove(er.RequestID);
+                        await msg.DeleteAsync();
+                    }
+                    string sql = $"INSERT INTO Emotes (EmoteID, RequestedBy, EmoteTrigger, fExt, RequireTarget, OutputText) VALUES ('{er.RequestID}', {er.RequestedBy}, '{er.Trigger}', '{er.FileExtension}', {(er.RequiresTarget ? 1 : 0)}, '{er.OutputText}');";
                     DBControl.UpdateDB(sql);
                 }
             }
@@ -114,6 +128,11 @@ namespace Haphrain.Classes.Commands
                     File.Delete(RequestLocation + er.FileName);
                     SuccessfulEmotes.Add(er.RequestID);
                     GlobalVars.EmoteRequests.Remove(er.RequestID);
+                    if (GlobalVars.RequestMessage.TryGetValue(er.RequestID, out var msg))
+                    {
+                        GlobalVars.RequestMessage.Remove(er.RequestID);
+                        await msg.DeleteAsync();
+                    }
                 }
             }
 
@@ -178,7 +197,16 @@ namespace Haphrain.Classes.Commands
                     {
                         Embed e = eb.Build();
                         string fName = RequestLocation + er.FileName;
-                        await chan.SendFileAsync(fName, null, false, e);
+                        var reqMsg = await chan.SendFileAsync(fName, null, false, e);
+                        GlobalVars.RequestMessage.Add(er.RequestID, reqMsg);
+                        var m = await Context.Channel.SendMessageAsync($"Emote requested, emote ID: {er.RequestID}");
+                        GlobalVars.AddRandomTracker(m, 15);
+                        var perms = Context.Guild.GetUser(Context.Client.CurrentUser.Id).GetPermissions(Context.Channel as IGuildChannel);
+                        if (perms.ManageMessages)
+                        {
+                            try { await Context.Message.DeleteAsync(); }
+                            catch { }
+                        }
                     }
                     catch (Exception ex) { Debug.WriteLine(ex.ToString()); }
                 }

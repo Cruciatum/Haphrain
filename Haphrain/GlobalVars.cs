@@ -25,6 +25,7 @@ namespace Haphrain
         internal static Dictionary<ulong, IUser> IgnoredUsers = new Dictionary<ulong, IUser>();
         internal static Dictionary<string, EmoteRequest> EmoteRequests = new Dictionary<string, EmoteRequest>();
         internal static Dictionary<string, ApprovedEmote> EmoteList = new Dictionary<string, ApprovedEmote>();
+        internal static Dictionary<string, IUserMessage> RequestMessage = new Dictionary<string, IUserMessage>();
 
         internal static List<GuildOption> GuildOptions { get; set; } = new List<GuildOption>();
 
