@@ -75,19 +75,23 @@ namespace Haphrain.Classes.Commands
         [Command("emote list"), Alias("e list", "el")]
         public async Task EmoteList()
         {
+            EmbedBuilder eb = new EmbedBuilder().WithTitle("Available emotes");
             List<string> list = new List<string>();
+            List<string> targetList = new List<string>();
             foreach (ApprovedEmote ae in GlobalVars.EmoteList.Values)
             {
-                if (list.Where(x => x.Contains(ae.Trigger)).Count() == 0)
-                {
-                    if (ae.RequiresTarget)
-                        list.Add(ae.Trigger + " @User");
-                    else
-                        list.Add(ae.Trigger);
-                }
+                if (ae.RequiresTarget)
+                    targetList.Add(ae.Trigger);
+                else
+                    list.Add(ae.Trigger);
             }
 
-            await Context.Channel.SendMessageAsync($"Available emotes:\n`{string.Join(", ", list)}`");
+            list.Sort();
+            eb.AddField("Self emotes: ", CraftList(list));
+
+            targetList.Sort();
+            eb.AddField("Targetted emotes: ", CraftList(targetList));
+            await Context.Channel.SendMessageAsync(null,false,eb.Build());
         }
 
         [Command("emote accept"), Alias("ea", "e accept", "emote a"), RequireOwner]
@@ -139,7 +143,7 @@ namespace Haphrain.Classes.Commands
             await Context.Channel.SendMessageAsync($"Emote(s) ID(s) denied: ({string.Join(", ", SuccessfulEmotes)})");
         }
 
-        [Command("emote request")]
+        [Command("emote request"), Alias("er", "e request", "emote r")]
         public async Task RequestEmote(string trigger, string url, bool RequiresTarget, [Remainder]string msg)
         {
             if (GlobalVars.FriendUsers.ContainsKey(Context.Message.Author.Id))
@@ -221,6 +225,17 @@ namespace Haphrain.Classes.Commands
                 var m = await Context.Channel.SendMessageAsync($"You're not on the whitelist, sorry.");
                 GlobalVars.AddRandomTracker(m, 10);
             }
+        }
+
+        private string CraftList(List<string> list)
+        {
+            list = list.Distinct().ToList();
+            List<string> newList = new List<string>();
+            foreach (string s in list)
+            {
+                newList.Add($"`{s}`");
+            }
+            return string.Join(" * ", newList);
         }
     }
 

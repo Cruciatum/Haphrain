@@ -27,6 +27,7 @@ namespace Haphrain
         private static readonly HttpClient httpClient = new HttpClient();
         private BotSettings bSettings;
         private DBSettings dbSettings;
+        private Random r = new Random();
 
         static void Main(string[] args) => new Program().MainAsync().GetAwaiter().GetResult();
 
@@ -334,8 +335,10 @@ namespace Haphrain
             if (msg.Content.Length <= 1 && msg.Embeds.Count == 0 && msg.Attachments.Count == 0) return;
             if (context.User.IsBot) return;
 
-            if (msg.Content.Length>=2)
-                if (msg.Content.ToLower().Substring(0,2) == "hi" && msg.Author.Id == 489410442029039657) { await context.Channel.SendMessageAsync($"Well hey there beautiful {msg.Author.Mention}"); return; } //Secret message to someone :>
+            if (msg.Content.Length >= 2)
+            {
+                if (msg.Content.ToLower().Substring(0, 2) == "hi" && msg.Author.Id == 489410442029039657 && r.Next(0,5) == 2) { await context.Channel.SendMessageAsync($"Well hey there beautiful {msg.Author.Mention}"); return; }
+            }
 
             var guildOptions = GlobalVars.GuildOptions.Single(x => x.GuildID == context.Guild.Id);
 
