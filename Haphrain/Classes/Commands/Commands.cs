@@ -33,6 +33,7 @@ namespace Haphrain.Classes.Commands
 
                 case "emotes":
                     builder.AddField($"{prefix}emote <trigger> [@user]", "Trigger a custom emote!");
+                    builder.AddField($"{prefix}emote list", "Show a list of currently available emotes");
                     builder.AddField($"{prefix}emote request <trigger> <imageURL> <true/false> <OutputMessage>", "Request a custom emote!\n"
                         + "Insert true if you want this to be a targetted emote, false if you don't\n"
                         + "Specify where you want the person triggering the emote's name in <OutputMessage> by using {author}\n"

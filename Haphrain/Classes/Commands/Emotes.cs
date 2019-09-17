@@ -63,6 +63,24 @@ namespace Haphrain.Classes.Commands
             }
         }
 
+        [Command("emote list"), Alias("e list", "el")]
+        public async Task EmoteList()
+        {
+            List<string> list = new List<string>();
+            foreach (ApprovedEmote ae in GlobalVars.EmoteList.Values)
+            {
+                if (list.Where(x => x.Contains(ae.Trigger)).Count() == 0)
+                {
+                    if (ae.RequiresTarget)
+                        list.Add(ae.Trigger + " @User");
+                    else
+                        list.Add(ae.Trigger);
+                }
+            }
+
+            await Context.Channel.SendMessageAsync($"Available emotes:\n`{string.Join(", ", list)}`");
+        }
+
         [Command("emote accept"), Alias("ea", "e accept", "emote a"), RequireOwner]
         public async Task AcceptEmote(params string[] emoteIDs)
         {

@@ -353,7 +353,7 @@ namespace Haphrain
                     if (msg.Attachments.Count > 0) { await ImageLogger.LogAttachment(msg, guildOptions.Options.LogChannelID, Client); }
             }
 
-            if (!(msg.HasStringPrefix(guildOptions.Prefix, ref argPos)) && !(msg.HasMentionPrefix(Client.CurrentUser, ref argPos))) return;
+            if (!(msg.HasStringPrefix(guildOptions.Prefix, ref argPos, StringComparison.CurrentCultureIgnoreCase)) && !(msg.HasMentionPrefix(Client.CurrentUser, ref argPos))) return;
 
 
             if (!await GlobalVars.CheckUserTimeout(context.Message.Author, context.Guild.Id, context.Channel)) return;
