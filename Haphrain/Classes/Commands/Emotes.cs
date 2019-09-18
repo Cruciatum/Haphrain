@@ -16,8 +16,8 @@ namespace Haphrain.Classes.Commands
 {
     public class Emotes : ModuleBase<SocketCommandContext>
     {
-        private readonly string RequestLocation = Constants._WORKDIR_ + Constants.slashType + "Requests" + Constants.slashType;
-        private readonly string FinalEmoteLocation = Constants._WORKDIR_ + Constants.slashType + "Emotes" + Constants.slashType;
+        internal static readonly string RequestLocation = Constants._WORKDIR_ + Constants.slashType + "Requests" + Constants.slashType;
+        private static readonly string FinalEmoteLocation = Constants._WORKDIR_ + Constants.slashType + "Emotes" + Constants.slashType;
 
         private readonly Random r = new Random();
 
@@ -93,6 +93,16 @@ namespace Haphrain.Classes.Commands
             eb.AddField("Targetted emotes: ", CraftList(targetList));
             await Context.Channel.SendMessageAsync(null,false,eb.Build());
         }
+        private string CraftList(List<string> list)
+        {
+            list = list.Distinct().ToList();
+            List<string> newList = new List<string>();
+            foreach (string s in list)
+            {
+                newList.Add($"`{s}`");
+            }
+            return string.Join(" * ", newList);
+        }
 
         [Command("emote accept"), Alias("ea", "e accept", "emote a"), RequireOwner]
         public async Task AcceptEmote(params string[] emoteIDs)
@@ -149,7 +159,7 @@ namespace Haphrain.Classes.Commands
             if (GlobalVars.FriendUsers.ContainsKey(Context.Message.Author.Id))
             {
                 if (msg == "") msg = $"is {trigger}";
-                EmoteRequest er = new EmoteRequest(Context.Message.Author.Id, trigger, RequiresTarget, msg);
+                EmoteRequest er = new EmoteRequest(Context.Message.Author, trigger, RequiresTarget, msg);
                 string finalURL = "";
                 string[] imgFileTypes = { ".jpg", ".jpeg", ".gif", ".png" };
                 foreach (string s in imgFileTypes)
@@ -187,22 +197,12 @@ namespace Haphrain.Classes.Commands
                     }
 
                     GlobalVars.EmoteRequests.Add(er.RequestID, er);
-                    var chan = Context.Client.GetChannel(623205967462662154) as IMessageChannel;
-                    EmbedBuilder eb = new EmbedBuilder()
-                        .WithTitle($"Emote request by: {Context.Message.Author.Username}#{Context.Message.Author.Discriminator}")
-                        .WithAuthor(Context.Message.Author)
-                        .WithColor(Color.Orange);
-                    eb.AddField("Request ID:", er.RequestID);
-                    eb.AddField("Desired trigger:", er.Trigger);
-                    eb.AddField("Require user target:", er.RequiresTarget);
-                    eb.AddField("Output text:", er.OutputText.ToLower().Contains("{author}") ? er.OutputText : "{author} " + er.OutputText);
+                    
+                    
 
                     try
                     {
-                        Embed e = eb.Build();
-                        string fName = RequestLocation + er.FileName;
-                        var reqMsg = await chan.SendFileAsync(fName, null, false, e);
-                        GlobalVars.RequestMessage.Add(er.RequestID, reqMsg);
+                        await SendRequest(er);
                         var m = await Context.Channel.SendMessageAsync($"Emote requested, emote ID: {er.RequestID}");
                         GlobalVars.AddRandomTracker(m, 15);
                         var perms = Context.Guild.GetUser(Context.Client.CurrentUser.Id).GetPermissions(Context.Channel as IGuildChannel);
@@ -227,15 +227,60 @@ namespace Haphrain.Classes.Commands
             }
         }
 
-        private string CraftList(List<string> list)
+        [Command("emote request edit"), Alias("ere", "e request edit", "emote r edit", "e r edit", "emote request e"), RequireOwner]
+        public async Task EditRequest(string emoteID, string paramName, [Remainder]string newValue)
         {
-            list = list.Distinct().ToList();
-            List<string> newList = new List<string>();
-            foreach (string s in list)
+            if (GlobalVars.EmoteRequests.TryGetValue(emoteID, out EmoteRequest er))
             {
-                newList.Add($"`{s}`");
+                string msg = "";
+                switch (paramName.ToLower())
+                {
+                    case "trigger":
+                        GlobalVars.EmoteRequests.Values.Single(e => e.RequestID == er.RequestID).ChangeTrigger(newValue);
+                        msg = $"Request {er.RequestID} has been edited.\nNew value for Trigger: `{newValue}`";
+                        break;
+                    case "requirestarget":
+                        GlobalVars.EmoteRequests.Values.Single(e => e.RequestID == er.RequestID).RequiresTarget = (newValue == "true" ? true : false );
+                        msg = $"Request {er.RequestID} has been edited.\n{(newValue == "true" ? "Will now require a target" : "Will no longer require a target!")}";
+                        break;
+                    case "outputtext":
+                        GlobalVars.EmoteRequests.Values.Single(e => e.RequestID == er.RequestID).OutputText = newValue;
+                        msg = $"Request {er.RequestID} has been edited.\nNew value for OutputText: `{newValue}`";
+                        break;
+                    default:
+                        msg = $"Invalid parameter name. Requires `trigger`, `requirestarget` or `outputtext`.\nYou supplied {paramName}" +
+                            $"";
+                        break;
+                }
+                try
+                {
+                    var reqMsg = GlobalVars.RequestMessage.FirstOrDefault(p => p.Key == er.RequestID).Value;
+                    await SendRequest(er);
+                    await reqMsg.DeleteAsync();
+                }
+                catch { }
+                var m = await Context.Channel.SendMessageAsync(msg);
+                GlobalVars.AddRandomTracker(m, 10);
             }
-            return string.Join(" * ", newList);
+        }
+
+        private async Task SendRequest(EmoteRequest er)
+        {
+            EmbedBuilder eb = new EmbedBuilder()
+                        .WithTitle($"Emote request by: {er.RequestedBy.Username}#{er.RequestedBy.Discriminator}")
+                        .WithAuthor(er.RequestedBy)
+                        .WithColor(Color.Orange);
+            eb.AddField("Request ID:", er.RequestID);
+            eb.AddField("Desired trigger:", er.Trigger);
+            eb.AddField("Require user target:", er.RequiresTarget);
+            eb.AddField("Output text:", er.OutputText.ToLower().Contains("{author}") ? er.OutputText : "{author} " + er.OutputText);
+
+            var chan = Context.Client.GetChannel(623205967462662154) as IMessageChannel;
+            string fName = RequestLocation + er.FileName;
+            var reqMsg = await chan.SendFileAsync(fName, null, false, eb.Build());
+            if (GlobalVars.RequestMessage.ContainsKey(er.RequestID))
+                GlobalVars.RequestMessage.Remove(er.RequestID);
+            GlobalVars.RequestMessage.Add(er.RequestID, reqMsg);
         }
     }
 
@@ -266,17 +311,17 @@ namespace Haphrain.Classes.Commands
     public class EmoteRequest
     {
         public string RequestID { get; }
-        public ulong RequestedBy { get; set; }
-        public string Trigger { get; set; }
+        public IUser RequestedBy { get; set; }
+        public string Trigger { get; private set; }
         public string FileName { get { return $"{Trigger}-{RequestID}{FileExtension}"; } }
         public string FileExtension { get; set; }
-        public bool RequiresTarget { get; }
+        public bool RequiresTarget { get; set; }
         public string OutputText { get; set; }
 
-        public EmoteRequest(ulong reqID, string trigger, bool hasTarget, string msg)
+        public EmoteRequest(IUser requester, string trigger, bool hasTarget, string msg)
         {
             RequestID = GenerateB64ID();
-            RequestedBy = reqID;
+            RequestedBy = requester;
             Trigger = trigger;
             RequiresTarget = hasTarget;
             OutputText = msg;
@@ -296,6 +341,11 @@ namespace Haphrain.Classes.Commands
                 }
             }
             return id;
+        }
+        public void ChangeTrigger(string newTrigger)
+        {
+            File.Move(Emotes.RequestLocation + FileName, Emotes.RequestLocation + $"{newTrigger}-{RequestID}{FileExtension}");
+            Trigger = newTrigger;
         }
 
         private readonly Random r = new Random();
