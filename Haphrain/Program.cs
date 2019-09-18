@@ -123,7 +123,8 @@ namespace Haphrain
 
                     go.Options = o;
 
-                    GlobalVars.GuildOptions.Add(go);
+                    if (!GlobalVars.GuildOptions.Any(x => x.GuildID == go.GuildID))
+                        GlobalVars.GuildOptions.Add(go);
                 }
                 dr.Close();
                 #endregion
@@ -133,8 +134,10 @@ namespace Haphrain
                 dr = cmd.ExecuteReader();
                 while (dr.Read())
                 {
-                    var user = await Classes.Commands.CustomUserTypereader.GetUserFromID(Convert.ToUInt64(dr.GetValue(0)), Client.Guilds);
-                    GlobalVars.FriendUsers.Add(Convert.ToUInt64(dr.GetValue(0)), user);
+                    var id = Convert.ToUInt64(dr.GetValue(0));
+                    var user = await CustomUserTypereader.GetUserFromID(id, Client.Guilds);
+                    if (!GlobalVars.FriendUsers.ContainsKey(id))
+                        GlobalVars.FriendUsers.Add(id, user);
                 }
                 dr.Close();
                 #endregion
@@ -144,8 +147,10 @@ namespace Haphrain
                 dr = cmd.ExecuteReader();
                 while (dr.Read())
                 {
-                    var user = await Classes.Commands.CustomUserTypereader.GetUserFromID(Convert.ToUInt64(dr.GetValue(0)), Client.Guilds);
-                    GlobalVars.IgnoredUsers.Add(Convert.ToUInt64(dr.GetValue(0)), user);
+                    var id = Convert.ToUInt64(dr.GetValue(0));
+                    var user = await Classes.Commands.CustomUserTypereader.GetUserFromID(id, Client.Guilds);
+                    if (!GlobalVars.IgnoredUsers.ContainsKey(id))
+                        GlobalVars.IgnoredUsers.Add(id, user);
                 }
                 dr.Close();
                 #endregion
@@ -156,7 +161,8 @@ namespace Haphrain
                 while (dr.Read())
                 {
                     ApprovedEmote ae = new ApprovedEmote(dr.GetValue(0).ToString(),dr.GetValue(3).ToString(),dr.GetValue(2).ToString(),Convert.ToBoolean(dr.GetValue(4)), dr.GetValue(5).ToString());
-                    GlobalVars.EmoteList.Add(ae.EmoteID, ae);
+                    if (!GlobalVars.EmoteList.ContainsKey(ae.EmoteID))
+                        GlobalVars.EmoteList.Add(ae.EmoteID, ae);
                 }
                 dr.Close();
                 #endregion
@@ -294,7 +300,8 @@ namespace Haphrain
             o.LogAttachments = false;
 
             go.Options = o;
-            GlobalVars.GuildOptions.Add(go);
+            if (!GlobalVars.GuildOptions.Any(x => x.GuildID == go.GuildID))
+                GlobalVars.GuildOptions.Add(go);
 
             DBControl.UpdateDB($"INSERT INTO Guilds (GuildID,GuildName,OwnerID,Prefix,LogChannelID,LogEmbeds,LogAttachments) VALUES ({go.GuildID.ToString()}, '{go.GuildName.Replace(@"'","")}',{go.OwnerID.ToString()},'{go.Prefix}',{go.Options.LogChannelID.ToString()}, {(go.Options.LogEmbeds ? 1:0)}, {(go.Options.LogAttachments ? 1:0)});");
 
