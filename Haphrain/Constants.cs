@@ -10,5 +10,7 @@ namespace Haphrain
         internal const double _CMDTIMEOUT_ = 5d;
 
         internal static char slashType = Path.DirectorySeparatorChar;
+
+        internal static ulong[] _BOTOWNERS_;
     }
 }

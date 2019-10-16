@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Haphrain.Classes.HelperObjects;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -11,28 +12,16 @@ namespace Haphrain.Classes.Commands
 {
     public class OwnerSays : ModuleBase<SocketCommandContext>
     {
-        [Command("say"), Summary("Allow bot creator to send a message to specified channel")]
+        [Command("say"), Summary("Allow bot creator to send a message to specified channel"), RequireBotOwner]
         public async Task Say(ulong chanId, [Remainder]string msg)
         {
-            if (Context.User.Id != 187675380423852032)
-            {
-                var m = await Context.Channel.SendMessageAsync("Nice try...");
-                GlobalVars.AddRandomTracker(m);
-                return;
-            }
             SocketTextChannel chan = (SocketTextChannel)Context.Client.GetChannel(chanId);
             await chan.SendMessageAsync(msg);
         }
 
-        [Command("get channels"), Summary("Send channel IDs to the bot owner, based on guild ID")]
+        [Command("get channels"), Summary("Send channel IDs to the bot owner, based on guild ID"), RequireBotOwner]
         public async Task GetChannels(ulong guildID)
         {
-            if (Context.User.Id != 187675380423852032)
-            {
-                var m = await Context.Channel.SendMessageAsync("Nice try...");
-                GlobalVars.AddRandomTracker(m);
-                return;
-            }
             SocketGuild guild = Context.Client.GetGuild(guildID);
             if (guild == null)
             {
@@ -81,7 +70,7 @@ namespace Haphrain.Classes.Commands
             }
         }
 
-        [Command("friend add"), Alias("fa", "f add", "friend a"), Summary("Add a friend to the bot"), RequireOwner]
+        [Command("friend add"), Alias("fa", "f add", "friend a"), Summary("Add a friend to the bot"), RequireBotOwner]
         public async Task AddFriend(ulong friendID)
         {
             var user = await CustomUserTypereader.GetUserFromID(friendID, Context.Client.Guilds);
@@ -101,7 +90,7 @@ namespace Haphrain.Classes.Commands
             }
         }
 
-        [Command("friend remove"), Alias("fr", "f remove", "friend r"), Summary("Add a friend to the bot"), RequireOwner]
+        [Command("friend remove"), Alias("fr", "f remove", "friend r"), Summary("Add a friend to the bot"), RequireBotOwner]
         public async Task RemoveFriend(ulong friendID)
         {
             GlobalVars.FriendUsers.TryGetValue(friendID, out IUser user);
@@ -120,9 +109,8 @@ namespace Haphrain.Classes.Commands
                 GlobalVars.AddRandomTracker(msg, 5);
             }
         }
-
-
-        [Command("ignore add"), Alias("ia","i add", "ignore a"), Summary("Ignore a user due to abuse"), RequireOwner]
+        
+        [Command("ignore add"), Alias("ia","i add", "ignore a"), Summary("Ignore a user due to abuse"), RequireBotOwner]
         public async Task AddIgnore(ulong idiotID)
         {
             var user = await CustomUserTypereader.GetUserFromID(idiotID, Context.Client.Guilds);
@@ -142,7 +130,7 @@ namespace Haphrain.Classes.Commands
             }
         }
 
-        [Command("ignore remove"), Alias("ir", "i remove", "ignore r"), Summary("Ignore a user due to abuse"), RequireOwner]
+        [Command("ignore remove"), Alias("ir", "i remove", "ignore r"), Summary("Ignore a user due to abuse"), RequireBotOwner]
         public async Task RemoveIgnore(ulong idiotID)
         {
             GlobalVars.IgnoredUsers.TryGetValue(idiotID, out IUser user);
@@ -160,6 +148,23 @@ namespace Haphrain.Classes.Commands
                 var msg = await Context.Channel.SendMessageAsync($"User not ignored (ID: {idiotID})");
                 GlobalVars.AddRandomTracker(msg, 5);
             }
+        }
+
+        [Command("addowner"), RequireBotOwner]
+        public async Task AddOwner(ulong id)
+        {
+            string sql = $"INSERT INTO BotOwners (OwnerID) VALUES ({id})";
+            var l = Constants._BOTOWNERS_.ToList();
+            l.Add(id);
+            Constants._BOTOWNERS_ = l.ToArray();
+            DBControl.UpdateDB(sql);
+            var m = await Context.Channel.SendMessageAsync($"User {CustomUserTypereader.GetUserFromID(id, Context.Client.Guilds).Result.Username} added as one of my Owners.");
+            GlobalVars.AddRandomTracker(m, 5);
+        }
+        [Command("addowner"), RequireBotOwner]
+        public async Task AddOwner(IUser usr)
+        {
+            await AddOwner(usr.Id);
         }
     }
 }
