@@ -167,6 +167,18 @@ namespace Haphrain
                 dr.Close();
                 #endregion
 
+                #region Get Bot Owners
+                cmd.CommandText = $"SELECT * FROM BotOwners";
+                dr = cmd.ExecuteReader();
+                List<ulong> ownerList = new List<ulong>();
+                while (dr.Read())
+                {
+                    ownerList.Add(Convert.ToUInt64(dr.GetValue(1)));
+                }
+                Constants._BOTOWNERS_ = ownerList.ToArray();
+                dr.Close();
+                #endregion
+
                 conn.Close();
                 conn.Dispose();
             }
@@ -267,6 +279,13 @@ namespace Haphrain
                 if (GlobalVars.GuildOptions.SingleOrDefault(x => x.GuildID == g.Id) == null)
                 {
                     await Client_JoinedGuild(g);
+                }
+            }
+            foreach (GuildOption go in GlobalVars.GuildOptions)
+            {
+                if (Client.Guilds.SingleOrDefault(x => x.Id == go.GuildID) == null)
+                {
+                    DBControl.UpdateDB($"DELETE FROM Guilds WHERE GuildID = {go.GuildID};");
                 }
             }
         }
