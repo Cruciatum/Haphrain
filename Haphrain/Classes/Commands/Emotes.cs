@@ -21,7 +21,7 @@ namespace Haphrain.Classes.Commands
 
         private readonly Random r = new Random();
 
-        [Command("emote"), Alias("e")]
+        [Command("emote"), Alias("e"), Priority(0)]
         public async Task SendEmote(string trigger, IUser usr = null)
         {
             List<ApprovedEmote> foundEmotes = new List<ApprovedEmote>();
@@ -72,7 +72,7 @@ namespace Haphrain.Classes.Commands
             }
         }
 
-        [Command("emote list"), Alias("e list", "el")]
+        [Command("emote list"), Alias("e list", "el"), Priority(1)]
         public async Task EmoteList()
         {
             EmbedBuilder eb = new EmbedBuilder().WithTitle("Available emotes");
@@ -104,7 +104,7 @@ namespace Haphrain.Classes.Commands
             return string.Join(" * ", newList);
         }
 
-        [Command("emote accept"), Alias("ea", "e accept", "emote a"), RequireOwner]
+        [Command("emote accept"), Alias("ea", "e accept", "emote a"), Priority(1), RequireOwner]
         public async Task AcceptEmote(params string[] emoteIDs)
         {
             List<string> SuccessfulEmotes = new List<string>();
@@ -131,7 +131,7 @@ namespace Haphrain.Classes.Commands
             await Context.Channel.SendMessageAsync($"Emote(s) ID(s) accepted: ({string.Join(", ", SuccessfulEmotes)})");
         }
 
-        [Command("emote deny"), Alias("ed", "e deny", "emote d"), RequireOwner]
+        [Command("emote deny"), Alias("ed", "e deny", "emote d"), Priority(1), RequireOwner]
         public async Task DenyEmote(params string[] emoteIDs)
         {
             List<string> SuccessfulEmotes = new List<string>();
@@ -153,11 +153,9 @@ namespace Haphrain.Classes.Commands
             await Context.Channel.SendMessageAsync($"Emote(s) ID(s) denied: ({string.Join(", ", SuccessfulEmotes)})");
         }
 
-        [Command("emote request"), Alias("er", "e request", "emote r")]
+        [Command("emote request"), Alias("er", "e request", "emote r"), Priority(1)]
         public async Task RequestEmote(string trigger, string url, bool RequiresTarget, [Remainder]string msg)
         {
-            if (GlobalVars.FriendUsers.ContainsKey(Context.Message.Author.Id))
-            {
                 if (msg == "") msg = $"is {trigger}";
                 EmoteRequest er = new EmoteRequest(Context.Message.Author, trigger, RequiresTarget, msg);
                 string finalURL = "";
@@ -219,15 +217,9 @@ namespace Haphrain.Classes.Commands
                     var m = await Context.Channel.SendMessageAsync("Could not get the download URL for this image.");
                     GlobalVars.AddRandomTracker(m, 20);
                 }
-            }
-            else
-            {
-                var m = await Context.Channel.SendMessageAsync($"You're not on the whitelist, sorry.");
-                GlobalVars.AddRandomTracker(m, 10);
-            }
         }
 
-        [Command("emote request edit"), Alias("ere", "e request edit", "emote r edit", "e r edit", "emote request e"), RequireOwner]
+        [Command("emote request edit"), Alias("ere", "e request edit", "emote r edit", "e r edit", "emote request e"), Priority(1), RequireOwner]
         public async Task EditRequest(string emoteID, string paramName, [Remainder]string newValue)
         {
             if (GlobalVars.EmoteRequests.TryGetValue(emoteID, out EmoteRequest er))
