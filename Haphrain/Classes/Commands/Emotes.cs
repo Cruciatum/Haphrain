@@ -104,7 +104,7 @@ namespace Haphrain.Classes.Commands
             return string.Join(" * ", newList);
         }
 
-        [Command("emote accept"), Alias("ea", "e accept", "emote a"), Priority(1), RequireOwner]
+        [Command("emote accept"), Alias("ea", "e accept", "emote a"), Priority(1), RequireBotOwner]
         public async Task AcceptEmote(params string[] emoteIDs)
         {
             List<string> SuccessfulEmotes = new List<string>();
@@ -131,7 +131,7 @@ namespace Haphrain.Classes.Commands
             await Context.Channel.SendMessageAsync($"Emote(s) ID(s) accepted: ({string.Join(", ", SuccessfulEmotes)})");
         }
 
-        [Command("emote deny"), Alias("ed", "e deny", "emote d"), Priority(1), RequireOwner]
+        [Command("emote deny"), Alias("ed", "e deny", "emote d"), Priority(1), RequireBotOwner]
         public async Task DenyEmote(params string[] emoteIDs)
         {
             List<string> SuccessfulEmotes = new List<string>();
@@ -219,7 +219,7 @@ namespace Haphrain.Classes.Commands
                 }
         }
 
-        [Command("emote request edit"), Alias("ere", "e request edit", "emote r edit", "e r edit", "emote request e"), Priority(1), RequireOwner]
+        [Command("emote request edit"), Alias("ere", "e request edit", "emote r edit", "e r edit", "emote request e"), Priority(1), RequireBotOwner]
         public async Task EditRequest(string emoteID, string paramName, [Remainder]string newValue)
         {
             if (GlobalVars.EmoteRequests.TryGetValue(emoteID, out EmoteRequest er))

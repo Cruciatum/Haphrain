@@ -218,7 +218,7 @@ namespace Haphrain
                         {
                             guildOptions.LogEmbeds = !guildOptions.LogEmbeds;
                             DBControl.UpdateDB($"UPDATE Guilds SET LogEmbeds = {(guildOptions.LogEmbeds?1:0)} WHERE GuildID = {guildID};");
-                            if (!guildOptions.LogEmbeds)
+                            if (guildOptions.LogEmbeds)
                             {
                                 await channel.SendMessageAsync("Now logging messages with embeds.");
                             }
@@ -228,7 +228,7 @@ namespace Haphrain
                         {
                             guildOptions.LogAttachments = !guildOptions.LogAttachments;
                             DBControl.UpdateDB($"UPDATE Guilds SET LogAttachments = {(guildOptions.LogAttachments?1:0)} WHERE GuildID = {guildID};");
-                            if (!guildOptions.LogAttachments)
+                            if (guildOptions.LogAttachments)
                             {
                                 await channel.SendMessageAsync("Now logging messages with attachments.");
                             }
@@ -360,11 +360,6 @@ namespace Haphrain
 
             if (msg.Content.Length <= 1 && msg.Embeds.Count == 0 && msg.Attachments.Count == 0) return;
             if (context.User.IsBot) return;
-
-            if (msg.Content.Length >= 2)
-            {
-                if (msg.Content.ToLower().Substring(0, 2) == "hi" && msg.Author.Id == 489410442029039657 && r.Next(0,5) == 2) { await context.Channel.SendMessageAsync($"Well hey there beautiful {msg.Author.Mention}"); return; }
-            }
 
             var guildOptions = GlobalVars.GuildOptions.Single(x => x.GuildID == context.Guild.Id);
 
