@@ -367,6 +367,8 @@ namespace Haphrain
             
             if (GlobalVars.IgnoredUsers.ContainsKey(context.Message.Author.Id)) return;
 
+            if (context.Message.Content.ToLower().Contains("bubbles") && (context.Message.Author.Id == 635873165758824449 || context.Message.Author.Id == 113310376623403008)) { await context.Channel.SendMessageAsync($"I'M NOT DOING IT {context.Message.Author.Mention}!"); return; }
+
             int argPos = 0;
 
             if (guildOptions.Options.LogChannelID != 0)

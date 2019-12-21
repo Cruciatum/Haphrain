@@ -123,7 +123,7 @@ namespace Haphrain.Classes.Commands
             if (s.IndexOf('@') == -1 || s.Replace("<", "").Replace(">", "").Length != s.Length - 2)
                 throw new Exception("Not a valid user mention.");
 
-            string idStr = s.Replace("<", "").Replace(">", "").Replace("@", "");
+            string idStr = s.Replace("<", "").Replace(">", "").Replace("@", "").Replace("!","");
 
             try
             {
