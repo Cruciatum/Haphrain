@@ -26,18 +26,24 @@ namespace Haphrain.Classes.Commands
 
                 ulong timeSpan = 0;
                 timecode = timecode.ToLower();
-                if (Regex.Match(timecode, @"\d+[dh]").Success)
+                if (Regex.Match(timecode, @"\d+[dhm]").Success || timecode == "test")
                 {
-                    int i = timecode.Contains('d') ? timecode.IndexOf('d') : (timecode.IndexOf('h'));
-                    ulong multiplier = 1;
-                    switch (timecode.Substring(i, 1))
+                    if (timecode == "test") { timeSpan = 10; }
+                    else
                     {
-                        case "d":
-                            multiplier = 24 * 60 * 60; break;
-                        default:
-                            multiplier = 60 * 60; break;
+                        int i = timecode.Contains('d') ? timecode.IndexOf('d') : (timecode.Contains('h') ? timecode.IndexOf('h') : timecode.IndexOf('m'));
+                        ulong multiplier = 1;
+                        switch (timecode.Substring(i, 1))
+                        {
+                            case "d":
+                                multiplier = 24 * 60 * 60; break;
+                            case "m":
+                                multiplier = 60; break;
+                            default:
+                                multiplier = 60 * 60; break;
+                        }
+                        timeSpan = ulong.Parse(timecode.Substring(0, i)) * multiplier;
                     }
-                    timeSpan = ulong.Parse(timecode.Substring(0, i)) * multiplier;
                     if (timeSpan > (7 * 24 * 60 * 60)) { await Context.Channel.SendMessageAsync($"Timespan too large, max amount of time: 7 days *({7 * 24} hours)*"); return; }
                 }
 

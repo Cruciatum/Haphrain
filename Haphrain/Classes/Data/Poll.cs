@@ -113,7 +113,7 @@ namespace Haphrain.Classes.Data
         {
             string bar = "[";
             float total = p.PollReactions.Count;
-            float percentage = (total / 100f) * p.PollReactions.Count(x => x.PollVote == s);
+            float percentage = (p.PollReactions.Count(x => x.PollVote == s) / total) * 100;
             int i = 0;
             while (i < percentage)
             {

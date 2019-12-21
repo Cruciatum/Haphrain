@@ -137,6 +137,7 @@ namespace Haphrain
                 await p.PollMessage.Channel.SendMessageAsync("Poll closed", false, eb.Build());
                 await p.PollMessage.DeleteAsync();
                 if (Polls.Contains(p)) Polls.Remove(p);
+                t.Dispose();
             }
             t.StartTimer(handler, duration * 1000);
             Polls.Add(p);
