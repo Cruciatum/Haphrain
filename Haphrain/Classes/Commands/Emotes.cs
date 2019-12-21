@@ -109,22 +109,25 @@ namespace Haphrain.Classes.Commands
         {
             List<string> SuccessfulEmotes = new List<string>();
             string dir = FinalEmoteLocation.Substring(0, FinalEmoteLocation.Length - 1);
+            EmoteRequest er = new EmoteRequest(null,"",false,"");
             if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
             foreach (string s in emoteIDs)
             {
-                if (GlobalVars.EmoteRequests.TryGetValue(s, out EmoteRequest er))
+                if (GlobalVars.EmoteRequests.TryGetValue(s, out er))
                 {
-                    File.Move(RequestLocation + er.FileName, FinalEmoteLocation + er.FileName);
                     SuccessfulEmotes.Add(er.RequestID);
-                    GlobalVars.EmoteList.Add(er.RequestID, new ApprovedEmote(er.RequestID, er.FileExtension, er.Trigger, er.RequiresTarget, er.OutputText));
-                    GlobalVars.EmoteRequests.Remove(er.RequestID);
+                    
                     if (GlobalVars.RequestMessage.TryGetValue(er.RequestID, out var msg))
                     {
-                        GlobalVars.RequestMessage.Remove(er.RequestID);
                         await msg.DeleteAsync();
+                        GlobalVars.RequestMessage.Remove(er.RequestID);
                     }
-                    string sql = $"INSERT INTO Emotes (EmoteID, RequestedBy, EmoteTrigger, fExt, RequireTarget, OutputText) VALUES ('{er.RequestID}', {er.RequestedBy}, '{er.Trigger}', '{er.FileExtension}', {(er.RequiresTarget ? 1 : 0)}, '{er.OutputText}');";
+                    string sql = $"INSERT INTO Emotes (EmoteID, RequestedBy, EmoteTrigger, fExt, RequireTarget, OutputText) VALUES ('{er.RequestID}', {er.RequestedBy.Id}, '{er.Trigger}', '{er.FileExtension}', {(er.RequiresTarget ? 1 : 0)}, '{er.OutputText}');";
                     DBControl.UpdateDB(sql);
+
+                    File.Move(RequestLocation + er.FileName, FinalEmoteLocation + er.FileName);
+                    GlobalVars.EmoteList.Add(er.RequestID, new ApprovedEmote(er.RequestID, er.FileExtension, er.Trigger, er.RequiresTarget, er.OutputText));
+                    GlobalVars.EmoteRequests.Remove(er.RequestID);
                 }
             }
 
