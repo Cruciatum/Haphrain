@@ -78,8 +78,9 @@ namespace Haphrain
             t.AutoReset = true;
             async void handler(object sender, ElapsedEventArgs e)
             {
-                foreach (Poll p in GlobalVars.Polls)
-                    await p.Update();
+                List<Poll> tempList = GlobalVars.Polls;
+                foreach (Poll p in tempList)
+                    await GlobalVars.Polls.Single(i=> i==p).Update();
             }
             t.StartTimer(handler, 5000);
 
