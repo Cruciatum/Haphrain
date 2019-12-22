@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,6 +14,7 @@ namespace Haphrain.Classes.Commands
         {
             var builder = new EmbedBuilder();
             string prefix = GlobalVars.GuildOptions.SingleOrDefault(x => x.GuildID == Context.Guild.Id).Prefix;
+            var target = Context.Channel;
 
             switch (subject.ToLower())
             {
@@ -35,10 +37,22 @@ namespace Haphrain.Classes.Commands
                     builder.AddField($"{prefix}emote <trigger> [@user]", "Trigger a custom emote!");
                     builder.AddField($"{prefix}emote list", "Show a list of currently available emotes");
                     builder.AddField($"{prefix}emote request <trigger> <imageURL> <true/false> <OutputMessage>", "Request a custom emote!\n"
-                        + "Insert true if you want this to be a targetted emote, false if you don't\n"
-                        + "Specify where you want the person triggering the emote's name in <OutputMessage> by using {author}\n"
-                        + "Specify where you want the (optional) target's name in <OutputMessage> by using {target}");
+                        + $"Use {prefix}help request for more help and some examples.");
                     break;
+
+                case "request":
+                    var dmTarget = await Context.Message.Author.GetOrCreateDMChannelAsync();
+                    builder.AddField($"{prefix}emote request <trigger> <imageURL> <true/false> <OutputMessage>",
+                        "**<trigger>**: The word through which users call the emote.\n" +
+                        "**<imageURL>**: A link to a .jpg, .gif or .png image.\n" +
+                        "**<true/false>**: Specify whether or not another user is to be mentioned.\n" +
+                        "**<OutputMessage>**: What should the bot say when this emote is used?\n" +
+                        "Use `{author}` and `{target}` to specify where people should be mentioned");
+                    builder.AddField($"Example 1 (with target):", $"{prefix}emote request **slap `link to image` true {{author}} slaps {{target}} across the face!**");
+                    builder.AddField($"Example 2 (without target):", $"{prefix}emote request **angry `link to image` false {{author}} is furious!**");
+                    while (dmTarget == null) { }
+                    await dmTarget.SendMessageAsync(null, false, builder.Build());
+                    return;
 
                 case "convert":
                     builder.AddField("Distance Conversion", $"{prefix}convert dist <#> <start unit> <end unit>\n[Supported units: km/m/cm/mm; mi/yd/ft/inch]");
@@ -69,7 +83,7 @@ namespace Haphrain.Classes.Commands
                     break;
             }
             
-            await Context.Channel.SendMessageAsync(null, false, builder.Build());
+            await target.SendMessageAsync(null, false, builder.Build());
         }
     }
 }
