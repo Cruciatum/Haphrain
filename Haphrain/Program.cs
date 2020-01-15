@@ -183,6 +183,21 @@ namespace Haphrain
                 dr.Close();
                 #endregion
 
+                #region Get Morty Users
+                cmd.CommandText = $"SELECT * FROM mortyUsers";
+                dr = cmd.ExecuteReader();
+                List<ulong> mortyUsers = new List<ulong>();
+                while (dr.Read())
+                {
+                    mortyUsers.Add(Convert.ToUInt64(dr.GetValue(1)));
+                }
+                GlobalVars.RegisteredMortyUsers = mortyUsers;
+                GlobalVars.MortyTimeouts = new Dictionary<ulong, bool>();
+                foreach (ulong u in GlobalVars.RegisteredMortyUsers)
+                    GlobalVars.MortyTimeouts.Add(u, false);
+                dr.Close();
+                #endregion
+
                 conn.Close();
                 conn.Dispose();
             }
