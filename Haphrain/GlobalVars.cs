@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Xml;
+using Haphrain.Classes.MortyGame;
 using Haphrain.Classes.Data;
 
 namespace Haphrain
@@ -19,6 +20,7 @@ namespace Haphrain
     internal static class GlobalVars
     {
         internal static DiscordSocketClient Client { get; set; }
+        internal static MortyGame GameObj { get; set; }
         internal static Random randGenerator = new Random();
 
         internal static Dictionary<ulong, IUser> FriendUsers = new Dictionary<ulong, IUser>();

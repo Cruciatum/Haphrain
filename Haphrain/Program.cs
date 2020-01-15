@@ -16,6 +16,7 @@ using System.Net.Http;
 using System.Data.SqlClient;
 using System.Collections.Generic;
 using Haphrain.Classes.Commands;
+using Haphrain.Classes.MortyGame;
 
 namespace Haphrain
 {
@@ -83,6 +84,8 @@ namespace Haphrain
                     await GlobalVars.Polls.Single(i=> i==p).Update();
             }
             t.StartTimer(handler, 5000);
+
+            GlobalVars.GameObj = new MortyGame(dbSettings);
 
             await Task.Delay(-1);
         }

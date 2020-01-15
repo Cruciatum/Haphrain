@@ -19,7 +19,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Game\Data\" />
     <Folder Include="Properties\" />
     <Folder Include="Resources\Database\" />
     <Folder Include="Resources\Datatypes\" />
