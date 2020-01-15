@@ -37,6 +37,8 @@ namespace Haphrain.Classes.Commands
 
             List<Character> WeightedList = rarity == "None" ? null : GlobalVars.GameObj.MortyList.Where(x => x.Rarity == rarity).ToList();
             Character c = WeightedList == null ? null : WeightedList[r.Next(WeightedList.Count())];
+
+            //Temporary, for testing purposes.
             string msg = c == null ? "You found nothing :(" : $"Morty found: {c.CharName}";
             await Context.Channel.SendMessageAsync(msg + $"\nYour roll: {rand} ({rarity})");
         }
