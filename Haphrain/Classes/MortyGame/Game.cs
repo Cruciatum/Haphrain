@@ -11,7 +11,6 @@ namespace Haphrain.Classes.MortyGame
         internal List<Character> MortyList = new List<Character>();
         internal MortyGame(DBSettings dbSettings)
         {
-
             SqlConnectionStringBuilder sBuilder = new SqlConnectionStringBuilder();
             sBuilder.InitialCatalog = dbSettings.db;
             sBuilder.UserID = dbSettings.username;

@@ -20,14 +20,14 @@ using Haphrain.Classes.MortyGame;
 
 namespace Haphrain
 {
-    class Program
+    internal class Program
     {
         private DiscordSocketClient Client;
         private CommandService Commands;
         private IServiceProvider Provider;
         private static readonly HttpClient httpClient = new HttpClient();
-        private BotSettings bSettings;
-        private DBSettings dbSettings;
+        internal static BotSettings bSettings;
+        internal static DBSettings dbSettings;
         private Random r = new Random();
 
         static void Main(string[] args) => new Program().MainAsync().GetAwaiter().GetResult();
