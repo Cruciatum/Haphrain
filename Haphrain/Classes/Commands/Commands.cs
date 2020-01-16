@@ -19,21 +19,25 @@ namespace Haphrain.Classes.Commands
             switch (subject.ToLower())
             {
                 case "misc":
+                    builder.WithTitle("Help: Miscellaneous");
                     builder.AddField($"{prefix}goodbye", "Make me leave this server\n(Server owner only)");
                     builder.AddField($"{prefix}coinflip", "Flip a coin!");
                     break;
 
                 case "remind":
+                    builder.WithTitle("Help: Remind");
                     builder.AddField($"{prefix}remind <#><d/h/m/s> <message>", "Set up a timed reminder\n(Doesn't work if bot is restarted the reminder is sent)");
                     break;
 
                 case "settings":
+                    builder.WithTitle("Help: Settings");
                     builder.AddField($"{prefix}setPrefix <NewPrefix>", "Change the prefix this bot should react to on your server\n(Administrators only)");
                     builder.AddField($"{prefix}setup", "Change what types of messages are to be logged\n(Administrators only)");
                     builder.AddField($"{prefix}set", "Show available server settings");
                     break;
 
                 case "emotes":
+                    builder.WithTitle("Help: Emotes");
                     builder.AddField($"{prefix}emote <trigger> [@user]", "Trigger a custom emote!");
                     builder.AddField($"{prefix}emote list", "Show a list of currently available emotes");
                     builder.AddField($"{prefix}emote request <trigger> <imageURL> <true/false> <OutputMessage>", "Request a custom emote!\n"
@@ -41,6 +45,7 @@ namespace Haphrain.Classes.Commands
                     break;
 
                 case "request":
+                    builder.WithTitle("Help: Requests");
                     var dmTarget = await Context.Message.Author.GetOrCreateDMChannelAsync();
                     builder.AddField($"{prefix}emote request <trigger> <imageURL> <true/false> <OutputMessage>",
                         "**<trigger>**: The word through which users call the emote.\n" +
@@ -55,24 +60,36 @@ namespace Haphrain.Classes.Commands
                     return;
 
                 case "convert":
+                    builder.WithTitle("Help: Convert");
                     builder.AddField("Distance Conversion", $"{prefix}convert dist <#> <start unit> <end unit>\n[Supported units: km/m/cm/mm; mi/yd/ft/inch]");
                     builder.AddField("Temperature Conversion", $"{prefix}convert temp <#> <start unit> <end unit>\n[Supported units: C/F/K]");
                     builder.AddField("Liquid Measure Conversion", $"{prefix}convert liq <#> <start unit> <end unit>\n[Supported units: l/dl/cl/ml; gal/oz]");
                     break;
 
                 case "define":
+                    builder.WithTitle("Help: Define");
                     builder.AddField($"{prefix}define", "Perform a search on Oxford Dictionary for your term\nDefaults to Urban Dictionary if the term isn't found");
                     builder.AddField($"{prefix}define urb", "Perform a search on Urban Dictionary for your term");
                     break;
 
                 case "poll":
+                    builder.WithTitle("Help: Polls");
                     builder.AddField($"{prefix}poll create <question> | <timecode> | <option> | <option> | [<option>] | [<option>] [<option>]", "Create a new poll in this channel\n**Timecode**: #(d/h)\n__MIN__ 2 options \n__MAX__ 5 options");
                     builder.AddField($"{prefix}poll close <id>", "Close a poll with the given ID");
                     builder.AddField($"{prefix}poll reset <id>", "Delete all votes from a poll & have me re-post it.");
                     break;
 
+                case "morty":
+                    builder.WithTitle("Help: Pocket Mortys");
+                    builder.AddField($"{prefix}mortystart", "Register yourself as a Pocket Morty player!");
+                    builder.AddField($"{prefix}morty","Attempt to add another Morty to your collection!");
+                    builder.AddField($"{prefix}mortyinfo <ID/Name>", "View base stats and info about a specific Morty.");
+                    builder.AddField($"{prefix}mortylist [Page #]", "View which Pocket Mortys you own so far!");
+                    break;
+
                 default:
                     builder.WithTitle("Available categories");
+                    builder.AddField("Pocket Mortys", $"{prefix}help morty");
                     builder.AddField("Polls", $"For more details: {prefix}help poll");
                     builder.AddField("Conversions", $"For more details: {prefix}help convert");
                     builder.AddField("Emotes", $"For more details: {prefix}help emotes");
