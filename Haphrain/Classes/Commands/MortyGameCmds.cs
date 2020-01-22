@@ -214,7 +214,7 @@ namespace Haphrain.Classes.Commands
             if (c != null)
             {
                 EmbedBuilder eb = new EmbedBuilder();
-                string cName = c.CharName.Replace("'", "").Replace(" ", "").Replace("-", "");
+                string cName = c.CharName.Replace("'", "").Replace(" ", "").Replace("-", "").Replace(".","");
                 if (cName.ToLower() == "morty") cName = "MortyDefault";
                 else
                 {

@@ -89,7 +89,7 @@ namespace Haphrain.Classes.Commands
 
                 default:
                     builder.WithTitle("Available categories");
-                    builder.AddField("Pocket Mortys", $"{prefix}help morty");
+                    builder.AddField("Pocket Mortys", $"For more details: {prefix}help morty");
                     builder.AddField("Polls", $"For more details: {prefix}help poll");
                     builder.AddField("Conversions", $"For more details: {prefix}help convert");
                     builder.AddField("Emotes", $"For more details: {prefix}help emotes");
