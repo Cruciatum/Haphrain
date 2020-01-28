@@ -29,7 +29,7 @@ namespace Haphrain.Classes.MortyGame
                 #region Get Base Mortys
                 string sql = "SELECT C.mortyID, C.mortyName, T.typeName, C.mortyRarity";
                 sql += ", C.mortyHP, C.mortyATK, C.mortyDEF, C.mortySPD, C.evolveAmount";
-                sql += ", C.evolvesTo, D.dimensionName";
+                sql += ", C.evolvesTo, D.dimensionName, C.raritySort";
                 sql += " FROM mortyCharacters C";
                 sql += " LEFT JOIN mortyDimensions D ON C.mortyDimension = D.dimensionID LEFT JOIN mortyTypes T ON C.mortyType = T.typeID;";
                 SqlCommand cmd = new SqlCommand(sql, conn);
@@ -49,7 +49,8 @@ namespace Haphrain.Classes.MortyGame
                         SPD = short.Parse(dr.GetValue(7).ToString()),
                         NeededToEvolve = short.Parse(dr.GetValue(8).ToString()),
                         EvolvesTo = null,
-                        Dimension = dr.GetValue(10).ToString()
+                        Dimension = dr.GetValue(10).ToString(),
+                        RaritySort = int.Parse(dr.GetValue(11).ToString())
                     };
 
                     MortyList.Add(c);

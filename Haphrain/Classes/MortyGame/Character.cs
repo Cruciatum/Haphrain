@@ -11,6 +11,7 @@ namespace Haphrain.Classes.MortyGame
         internal string CharName { get; set; }
         internal string Type { get; set; }
         internal string Rarity { get; set; }
+        internal int RaritySort { get; set; }
         internal short HP { get; set; }
         internal short ATK { get; set; }
         internal short DEF { get; set; }

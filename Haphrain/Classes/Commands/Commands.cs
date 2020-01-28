@@ -85,6 +85,7 @@ namespace Haphrain.Classes.Commands
                     builder.AddField($"{prefix}morty","Attempt to add another Morty to your collection!");
                     builder.AddField($"{prefix}mortyinfo <ID/Name>", "View base stats and info about a specific Morty.");
                     builder.AddField($"{prefix}mortylist [Page #]", "View which Pocket Mortys you own so far!");
+                    builder.AddField($"{prefix}mortyorder <order option> <asc/desc>", "Select how you want your Mortys to be ordered!\n*Available order options: `id, rarity, stattotal, count`*");
                     break;
 
                 default:

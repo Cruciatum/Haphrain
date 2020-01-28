@@ -22,7 +22,7 @@ namespace Haphrain.Classes.Commands
                 GlobalVars.AddRandomTracker(m);
                 return;
             }
-            string sql = $"INSERT INTO mortyUsers (discordID) VALUES ({Context.User.Id})";
+            string sql = $"INSERT INTO mortyUsers (discordID, orderType, orderDir) VALUES ({Context.User.Id}, 'id', 'asc')";
             DBControl.UpdateDB(sql);
 
             GlobalVars.RegisteredMortyUsers.Add(Context.User.Id);
@@ -141,9 +141,57 @@ namespace Haphrain.Classes.Commands
             ti.StartTimer(handler, 3600000);
         }
 
+        [Command("mortyorder"), Alias("mo"), Summary("Change how your list of Mortys appears")]
+        public async Task OrderOption(string orderType, string mode = "asc")
+        {
+            if (!GlobalVars.RegisteredMortyUsers.Contains(Context.User.Id))
+            {
+                string prefix = GlobalVars.GuildOptions.SingleOrDefault(x => x.GuildID == Context.Guild.Id).Prefix;
+                await Context.Channel.SendMessageAsync($"{Context.User.Mention}, you haven't registered to play yet.\nPlease use the command `{prefix}mortystart` first!");
+                return;
+            }
+
+            if (!new string[] { "id", "rarity", "count", "stattotal" }.Contains(orderType.ToLower())) {
+                var m = await Context.Channel.SendMessageAsync($"{Context.User.Mention}, invalid ordering option, please check your spelling and try again.\n" +
+                    $"Valid ordering options: `id, rarity, count, stattotal`");
+                GlobalVars.AddRandomTracker(m);
+                return;
+            }
+
+            var msg = $"Your mortylist will now be sorted by {orderType} in ";
+            mode = mode.Trim();
+
+            if ("asc" == mode.ToLower())
+                msg += "ascending order.";
+            else if (mode.ToLower() == "desc")
+            {
+                msg += "descending order.";
+            }
+            else
+            {
+                msg += "ascending order.\n(Default due to incorrect input)";
+                mode = "asc";
+            }
+
+            string sql = $"UPDATE mortyUsers SET orderType = '{orderType.ToLower()}' WHERE discordID = {Context.User.Id}";
+            DBControl.UpdateDB(sql);
+
+            sql = $"UPDATE mortyUsers SET orderDir = '{mode.ToLower()}' WHERE discordID = {Context.User.Id}";
+            DBControl.UpdateDB(sql);
+
+            await Context.Channel.SendMessageAsync(msg);
+        }
+
         [Command("mortylist"), Alias("ml"), Summary("View a list of your Mortys!")]
         public async Task ListMortys(int page = 1)
         {
+            if (!GlobalVars.RegisteredMortyUsers.Contains(Context.User.Id))
+            {
+                string prefix = GlobalVars.GuildOptions.SingleOrDefault(x => x.GuildID == Context.Guild.Id).Prefix;
+                await Context.Channel.SendMessageAsync($"{Context.User.Mention}, you haven't registered to play yet.\nPlease use the command `{prefix}mortystart` first!");
+                return;
+            }
+
             EmbedBuilder eb = new EmbedBuilder();
             eb.Title = $"{Context.User}'s Mortys";
             string desc = "";
@@ -168,7 +216,7 @@ namespace Haphrain.Classes.Commands
 
                 string sql =
                 $"SELECT" +
-                $" U.userID, C.mortyName, O.mortyLevel" +
+                $" U.userID, C.mortyName, O.mortyLevel, U.orderType, U.orderDir" +
                 $" FROM ownedMortys O" +
                 $" LEFT JOIN mortyCharacters C ON O.mortyID = C.mortyID" +
                 $" LEFT JOIN mortyUsers U ON O.userID = U.userID" +
@@ -176,23 +224,29 @@ namespace Haphrain.Classes.Commands
 
                 SqlCommand cmd = new SqlCommand(sql, conn);
                 SqlDataReader dr = cmd.ExecuteReader();
-                Dictionary<string, int> mortyCounts = new Dictionary<string, int>();
+                Dictionary<Character, int> mortyCounts = new Dictionary<Character, int>();
+                string orderType = "";
+                string orderDir = "";
 
                 while (dr.Read())
                 {
-                    string name = dr.GetValue(1).ToString();
+                    var c = GlobalVars.GameObj.MortyList.Single(x => x.CharName == dr.GetValue(1).ToString());
                     int lvl = int.Parse(dr.GetValue(2).ToString());
+                    orderType = dr.GetValue(3).ToString().Trim();
+                    orderDir = dr.GetValue(4).ToString().Trim();
 
-                    if (mortyCounts.ContainsKey(name))
-                        mortyCounts[name]++;
+                    if (mortyCounts.ContainsKey(c))
+                        mortyCounts[c]++;
                     else
-                        mortyCounts.Add(name, 1);
+                        mortyCounts.Add(c, 1);
                 }
 
+                mortyCounts = SortDictionary(mortyCounts, orderType, orderDir);
+                
                 List<string> results = new List<string>();
                 foreach (var k in mortyCounts.Keys)
                 {
-                    results.Add($"**{k}** | Amount: {mortyCounts[k]}\n");
+                    results.Add($"**(#{k.CharID}){k.CharName}** | Rarity: {k.Rarity} | Owned: {mortyCounts[k]}\n");
                 }
                 for (int i = (10*page)-10; i < 10 * page; i++)
                 {
@@ -207,6 +261,32 @@ namespace Haphrain.Classes.Commands
                 #endregion
             }
             await Context.Channel.SendMessageAsync(null, false, eb.Build());
+        }
+
+        private Dictionary<Character, int> SortDictionary(Dictionary<Character, int> mortyCounts, string orderType, string orderDir)
+        {
+            Dictionary<Character, int> newDictionary = new Dictionary<Character, int>();
+            List<Character> chars = mortyCounts.Keys.ToList(); 
+            switch (orderType)
+            {
+                case "id":
+                    chars = orderDir == "asc" ? chars.OrderBy(c => c.CharID).ToList() : chars.OrderByDescending(c => c.CharID).ToList();
+                    break;
+                case "rarity":
+                    chars = orderDir == "asc" ? chars.OrderBy(c=>c.RaritySort).ToList() : chars.OrderByDescending(c => c.RaritySort).ToList();
+                    break;
+                case "count":
+                    newDictionary = orderDir == "asc" ? mortyCounts.OrderBy(vp => vp.Value).ToDictionary(x=>x.Key, x=>x.Value) : mortyCounts.OrderByDescending(vp => vp.Value).ToDictionary(x => x.Key, x => x.Value);
+                    break;
+                case "stattotal":
+                    chars = orderDir == "asc" ? chars.OrderBy(c => c.StatTotal).ToList() : chars.OrderByDescending(c => c.StatTotal).ToList();
+                    break;
+            }
+
+            if (newDictionary.Count == 0)
+                foreach (var c in chars) newDictionary.Add(mortyCounts.Keys.Single(x => x == c), mortyCounts[c]);
+
+            return newDictionary;
         }
 
         private async Task DoLookup(Character c, int ID = -1, string name = "[Invalid ID/Name]")
