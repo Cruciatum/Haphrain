@@ -64,6 +64,7 @@ namespace Haphrain.Classes.Commands
                     builder.AddField("Distance Conversion", $"{prefix}convert dist <#> <start unit> <end unit>\n[Supported units: km/m/cm/mm; mi/yd/ft/inch]");
                     builder.AddField("Temperature Conversion", $"{prefix}convert temp <#> <start unit> <end unit>\n[Supported units: C/F/K]");
                     builder.AddField("Liquid Measure Conversion", $"{prefix}convert liq <#> <start unit> <end unit>\n[Supported units: l/dl/cl/ml; gal/oz]");
+                    builder.AddField("Weight Conversion", $"{prefix}convert wgt <#> <start unit> <end unit>\n[Supported units: kg/g/dg/cg/mg; st/lbs/oz]");
                     break;
 
                 case "define":

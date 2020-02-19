@@ -12,8 +12,10 @@ namespace Haphrain.Classes.Commands
     public class UnitConverter : ModuleBase<SocketCommandContext>
     {
         private string[] SupportedUnitsDist = new string[] { "km", "m", "cm", "mm", "mi", "yd", "ft", "inch" };
-        private string[] SupportesUnitsLiq = new string[] { "l", "dl","cl","ml", "gal","oz" };
-        [Command("convert dist"), Summary("Convert from Metric to Imperial and back"), Priority(2)]
+        private string[] SupportedUnitsLiq = new string[] { "l", "dl", "cl", "ml", "gal","oz" };
+        private string[] SupportedUnitsWgt = new string[] { "kg", "g", "dg", "cg", "mg", "st", "lbs", "oz"};
+
+        [Command("convert dist"), Summary("Convert distance units"), Priority(2)]
         public async Task ConvertMetricImp(string convertAmt, string StartUnit, string EndUnit)
         {
             StartUnit = StartUnit.ToLower();
@@ -90,10 +92,10 @@ namespace Haphrain.Classes.Commands
                     else break;
                 }
             }
-            await Context.Channel.SendMessageAsync($"`{convertAmt} {StartUnit} = {r} {EndUnit}`");
+            await Context.Channel.SendMessageAsync($"`{convertAmt} {StartUnit} ≈ {r} {EndUnit}`");
         }
 
-        [Command("convert temp"), Summary("Convert from Celcius to Fahrenheit and back"), Priority(2)]
+        [Command("convert temp"), Summary("Convert temperature units"), Priority(2)]
         public async Task ConvertCF(string convertAmt, string StartUnit, string EndUnit)
         {
             StartUnit = StartUnit.ToUpper();
@@ -156,10 +158,10 @@ namespace Haphrain.Classes.Commands
                     else break;
                 }
             }
-            await Context.Channel.SendMessageAsync($"`{convertAmt} °{StartUnit} = {r} °{EndUnit}`");
+            await Context.Channel.SendMessageAsync($"`{convertAmt} °{StartUnit} ≈ {r} °{EndUnit}`");
         }
 
-        [Command("convert liq"), Summary("Convert from Liters to Ounces/Gallons and back"), Priority(2)]
+        [Command("convert liq"), Summary("Convert liquid volume units"), Priority(2)]
         public async Task ConvertLiq(string convertAmt, string StartUnit, string EndUnit)
         {
             StartUnit = StartUnit.ToLower();
@@ -167,15 +169,15 @@ namespace Haphrain.Classes.Commands
             double amtToConvert = 0d;
 
             #region Errorchecking
-            if (!SupportesUnitsLiq.Contains(StartUnit))
+            if (!SupportedUnitsLiq.Contains(StartUnit))
             {
-                var msg = await Context.Channel.SendMessageAsync($"{Context.User.Mention} -> Your start unit is incorrect, supported units: {string.Join(" - ", SupportedUnitsDist)}");
+                var msg = await Context.Channel.SendMessageAsync($"{Context.User.Mention} -> Your start unit is incorrect, supported units: {string.Join(" - ", SupportedUnitsLiq)}");
                 GlobalVars.AddRandomTracker(msg);
                 return;
             }
-            if (!SupportesUnitsLiq.Contains(EndUnit))
+            if (!SupportedUnitsLiq.Contains(EndUnit))
             {
-                var msg = await Context.Channel.SendMessageAsync($"{Context.User.Mention} -> Your end unit is incorrect, supported units: {string.Join(" - ", SupportedUnitsDist)}");
+                var msg = await Context.Channel.SendMessageAsync($"{Context.User.Mention} -> Your end unit is incorrect, supported units: {string.Join(" - ", SupportedUnitsLiq)}");
                 GlobalVars.AddRandomTracker(msg);
                 return;
             }
@@ -232,7 +234,97 @@ namespace Haphrain.Classes.Commands
                     else break;
                 }
             }
-            await Context.Channel.SendMessageAsync($"`{convertAmt} {StartUnit} = {r} {EndUnit}`");
+            await Context.Channel.SendMessageAsync($"`{convertAmt} {StartUnit} ≈ {r} {EndUnit}`");
+        }
+
+        [Command("convert wgt"), Summary("Convert weight units"), Priority(2)]
+        public async Task ConvertWgt(string convertAmt, string StartUnit, string EndUnit)
+        {
+            StartUnit = StartUnit.ToLower();
+            if (StartUnit == "pound" || StartUnit == "pounds") StartUnit = "lbs";
+            if (StartUnit == "ounce") StartUnit = "oz";
+            if (StartUnit == "stone") StartUnit = "st";
+
+            EndUnit = EndUnit.ToLower();
+            if (EndUnit == "pound" || EndUnit == "pounds") EndUnit = "lbs";
+            if (EndUnit == "ounce") EndUnit = "oz";
+            if (EndUnit == "stone") EndUnit = "st";
+
+            double amtToConvert = 0d;
+
+            #region Errorchecking
+            if (!SupportedUnitsWgt.Contains(StartUnit))
+            {
+                var msg = await Context.Channel.SendMessageAsync($"{Context.User.Mention} -> Your start unit is incorrect, supported units: {string.Join(" - ", SupportedUnitsWgt)}");
+                GlobalVars.AddRandomTracker(msg);
+                return;
+            }
+            if (!SupportedUnitsWgt.Contains(EndUnit))
+            {
+                var msg = await Context.Channel.SendMessageAsync($"{Context.User.Mention} -> Your end unit is incorrect, supported units: {string.Join(" - ", SupportedUnitsWgt)}");
+                GlobalVars.AddRandomTracker(msg);
+                return;
+            }
+
+            try
+            {
+                amtToConvert = double.Parse(convertAmt);
+            }
+            catch
+            {
+                var msg = await Context.Channel.SendMessageAsync($"{Context.User.Mention} -> Something went wrong while reading your number, your entry: {convertAmt}");
+                GlobalVars.AddRandomTracker(msg);
+                return;
+            }
+            #endregion
+
+            double valuesToSend = 0d;
+            switch (EndUnit)
+            {
+                case "kg":
+                    valuesToSend = ConvertHelpers.ToKilos(amtToConvert, StartUnit);
+                    break;
+                case "g":
+                    valuesToSend = ConvertHelpers.ToG(amtToConvert, StartUnit);
+                    break;
+                case "dg":
+                    valuesToSend = ConvertHelpers.ToDg(amtToConvert, StartUnit);
+                    break;
+                case "cg":
+                    valuesToSend = ConvertHelpers.ToCg(amtToConvert, StartUnit);
+                    break;
+                case "mg":
+                    valuesToSend = ConvertHelpers.ToMg(amtToConvert, StartUnit);
+                    break;
+                case "st":
+                    valuesToSend = ConvertHelpers.ToStone(amtToConvert, StartUnit);
+                    break;
+                case "lbs":
+                    valuesToSend = ConvertHelpers.ToLbs(amtToConvert, StartUnit);
+                    break;
+                case "oz":
+                    valuesToSend = ConvertHelpers.ToOz(amtToConvert, StartUnit);
+                    break;
+                default: break;
+            }
+
+            NumberFormatInfo ni = new CultureInfo("sv-SE", false).NumberFormat;
+            string r = valuesToSend.ToString("N6", ni);
+            if (r.Contains(','))
+            {
+                for (int i = r.Length - 1; i > 0; i--)
+                {
+                    if (!r.Contains(',')) break;
+                    if (r[i] == '0' || r[i] == ',')
+                    {
+                        var rArray = r.ToList();
+                        rArray.RemoveAt(i);
+                        r = string.Join("", rArray);
+                    }
+                    else break;
+                }
+            }
+            await Context.Channel.SendMessageAsync($"`{convertAmt} {StartUnit} ≈ {r} {EndUnit}`");
         }
     }
 
@@ -270,13 +362,13 @@ namespace Haphrain.Classes.Commands
             return d;
         }
 
-        internal static double ToKm(double startAmt, string sourceUnit) { return ConvertHelpers.ToMeters(startAmt * 0.001d, sourceUnit); }
-        internal static double ToCm(double startAmt, string sourceUnit) { return ConvertHelpers.ToMeters(startAmt * 100d, sourceUnit); }
-        internal static double ToMm(double startAmt, string sourceUnit) { return ConvertHelpers.ToMeters(startAmt * 1000d, sourceUnit); }
+        internal static double ToKm(double startAmt, string sourceUnit) { return ToMeters(startAmt * 0.001d, sourceUnit); }
+        internal static double ToCm(double startAmt, string sourceUnit) { return ToMeters(startAmt * 100d, sourceUnit); }
+        internal static double ToMm(double startAmt, string sourceUnit) { return ToMeters(startAmt * 1000d, sourceUnit); }
 
-        internal static double ToMiles(double startAmt,string sourceUnit) { return ConvertHelpers.ToKm(startAmt, sourceUnit) / 1.609344d; }
-        internal static double ToFeet(double startAmt, string sourceUnit) { return ConvertHelpers.ToMeters(startAmt, sourceUnit) / 0.3048d; }
-        internal static double ToInches(double startAmt, string sourceUnit) { return ConvertHelpers.ToMeters(startAmt,sourceUnit) / 0.0254d; }
+        internal static double ToMiles(double startAmt,string sourceUnit) { return ToKm(startAmt, sourceUnit) / 1.609344d; }
+        internal static double ToFeet(double startAmt, string sourceUnit) { return ToMeters(startAmt, sourceUnit) / 0.3048d; }
+        internal static double ToInches(double startAmt, string sourceUnit) { return ToMeters(startAmt,sourceUnit) / 0.0254d; }
         #endregion
 
         #region Temp
@@ -298,8 +390,8 @@ namespace Haphrain.Classes.Commands
             return d;
         }
 
-        internal static double ToFahrenheit(double startAmt, string sourceUnit) { return (ConvertHelpers.ToCelcius(startAmt, sourceUnit) * (9d / 5d)) + 32d; }
-        internal static double ToKelvin(double startAmt, string sourceUnit) { return ConvertHelpers.ToCelcius(startAmt, sourceUnit) + 273.15d; }
+        internal static double ToFahrenheit(double startAmt, string sourceUnit) { return (ToCelcius(startAmt, sourceUnit) * (9d / 5d)) + 32d; }
+        internal static double ToKelvin(double startAmt, string sourceUnit) { return ToCelcius(startAmt, sourceUnit) + 273.15d; }
         #endregion
 
         #region Liquid
@@ -330,12 +422,56 @@ namespace Haphrain.Classes.Commands
             return d;
         }
 
-        internal static double ToDl(double startAmt, string sourceUnit) { return ConvertHelpers.ToLiters(startAmt, sourceUnit) * 10d; }
-        internal static double ToCl(double startAmt, string sourceUnit) { return ConvertHelpers.ToLiters(startAmt, sourceUnit) * 100d; }
-        internal static double ToMl(double startAmt, string sourceUnit) { return ConvertHelpers.ToLiters(startAmt, sourceUnit) * 1000d; }
+        internal static double ToDl(double startAmt, string sourceUnit) { return ToLiters(startAmt, sourceUnit) * 10d; }
+        internal static double ToCl(double startAmt, string sourceUnit) { return ToLiters(startAmt, sourceUnit) * 100d; }
+        internal static double ToMl(double startAmt, string sourceUnit) { return ToLiters(startAmt, sourceUnit) * 1000d; }
 
-        internal static double ToGallons(double startAmt, string sourceUnit) { return ConvertHelpers.ToLiters(startAmt, sourceUnit) * 0.264172d; }
-        internal static double ToFlOunces(double startAmt, string sourceUnit) { return ConvertHelpers.ToLiters(startAmt, sourceUnit) * 33.814023d; }
+        internal static double ToGallons(double startAmt, string sourceUnit) { return ToLiters(startAmt, sourceUnit) * 0.264172d; }
+        internal static double ToFlOunces(double startAmt, string sourceUnit) { return ToLiters(startAmt, sourceUnit) * 33.814023d; }
+        #endregion
+
+        #region Weight
+        internal static double ToKilos(double startAmt, string sourceUnit)
+        {
+            double d = 0d;
+            switch (sourceUnit)
+            {
+                case "kg":
+                    d = startAmt;
+                    break;
+                case "g":
+                    d = startAmt / 1000d;
+                    break;
+                case "dg":
+                    d = startAmt / 10000d;
+                    break;
+                case "cg":
+                    d = startAmt / 100000d;
+                    break;
+                case "mg":
+                    d = startAmt / 1000000d;
+                    break;
+                case "st":
+                    d = startAmt / 0.15747;
+                    break;
+                case "lbs":
+                    d = startAmt / 2.2046;
+                    break;
+                case "oz":
+                    d = startAmt / 35.274;
+                    break;
+            }
+            return d;
+        }
+
+        internal static double ToG(double startAmt, string sourceUnit) { return ToKilos(startAmt, sourceUnit) * 1000d; }
+        internal static double ToDg(double startAmt, string sourceUnit) { return ToKilos(startAmt, sourceUnit) * 10000d; }
+        internal static double ToCg(double startAmt, string sourceUnit) { return ToKilos(startAmt, sourceUnit) * 100000d; }
+        internal static double ToMg(double startAmt, string sourceUnit) { return ToKilos(startAmt, sourceUnit) * 1000000d; }
+
+        internal static double ToStone(double startAmt, string sourceUnit) { return ToKilos(startAmt, sourceUnit) * 0.15747d; }
+        internal static double ToLbs(double startAmt, string sourceUnit) { return ToKilos(startAmt, sourceUnit) * 2.2046d; }
+        internal static double ToOz(double startAmt, string sourceUnit) { return ToKilos(startAmt, sourceUnit) * 35.274d; }
         #endregion
     }
 }
