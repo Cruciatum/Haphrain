@@ -164,7 +164,7 @@ namespace Haphrain
                 dr = cmd.ExecuteReader();
                 while (dr.Read())
                 {
-                    ApprovedEmote ae = new ApprovedEmote(dr.GetValue(0).ToString(),dr.GetValue(3).ToString(),dr.GetValue(2).ToString(),Convert.ToBoolean(dr.GetValue(4)), dr.GetValue(5).ToString());
+                    ApprovedEmote ae = new ApprovedEmote(dr.GetValue(0).ToString(),dr.GetValue(3).ToString(),dr.GetValue(2).ToString(),Convert.ToBoolean(dr.GetValue(4)), dr.GetValue(5).ToString(), Convert.ToBoolean(dr.GetValue(6)));
                     if (!GlobalVars.EmoteList.ContainsKey(ae.EmoteID))
                         GlobalVars.EmoteList.Add(ae.EmoteID, ae);
                 }

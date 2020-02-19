@@ -25,6 +25,7 @@ namespace Haphrain.Classes.Commands
         public async Task SendEmote(string trigger, IUser usr = null)
         {
             List<ApprovedEmote> foundEmotes = new List<ApprovedEmote>();
+            bool hasNsfw = ((ITextChannel)Context.Channel).IsNsfw;
             bool hasUsr = usr == null ? false : true;
             if (!hasUsr) usr = Context.Client.CurrentUser;
             if (Context.Message.Author.Id == usr.Id)
@@ -34,7 +35,8 @@ namespace Haphrain.Classes.Commands
             }
 
             //Get all valid emotes for this trigger
-            foreach (ApprovedEmote ae in GlobalVars.EmoteList.Values.Where(e => e.Trigger == trigger))
+            var list = hasNsfw ? GlobalVars.EmoteList.Values.Where(e => e.Trigger == trigger) : GlobalVars.EmoteList.Values.Where(e => e.Trigger == trigger && e.Nsfw == false);
+            foreach (ApprovedEmote ae in list)
             {
                 if (ae.RequiresTarget == hasUsr)
                 {
@@ -78,7 +80,9 @@ namespace Haphrain.Classes.Commands
             EmbedBuilder eb = new EmbedBuilder().WithTitle("Available emotes");
             List<string> list = new List<string>();
             List<string> targetList = new List<string>();
-            foreach (ApprovedEmote ae in GlobalVars.EmoteList.Values)
+            var nsfwList = ((ITextChannel)Context.Channel).IsNsfw ? GlobalVars.EmoteList.Values : GlobalVars.EmoteList.Values.Where(e => e.Nsfw == false);
+
+            foreach (ApprovedEmote ae in nsfwList)
             {
                 if (ae.RequiresTarget)
                     targetList.Add(ae.Trigger);
@@ -109,7 +113,7 @@ namespace Haphrain.Classes.Commands
         {
             List<string> SuccessfulEmotes = new List<string>();
             string dir = FinalEmoteLocation.Substring(0, FinalEmoteLocation.Length - 1);
-            EmoteRequest er = new EmoteRequest(null,"",false,"");
+            EmoteRequest er = new EmoteRequest(null,"",false,"",false);
             if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
             foreach (string s in emoteIDs)
             {
@@ -122,11 +126,11 @@ namespace Haphrain.Classes.Commands
                         await msg.DeleteAsync();
                         GlobalVars.RequestMessage.Remove(er.RequestID);
                     }
-                    string sql = $"INSERT INTO Emotes (EmoteID, RequestedBy, EmoteTrigger, fExt, RequireTarget, OutputText) VALUES ('{er.RequestID}', {er.RequestedBy.Id}, '{er.Trigger}', '{er.FileExtension}', {(er.RequiresTarget ? 1 : 0)}, '{er.OutputText}');";
+                    string sql = $"INSERT INTO Emotes (EmoteID, RequestedBy, EmoteTrigger, fExt, RequireTarget, OutputText, Nsfw) VALUES ('{er.RequestID}', {er.RequestedBy.Id}, '{er.Trigger}', '{er.FileExtension}', {(er.RequiresTarget ? 1 : 0)}, '{er.OutputText}', {(er.Nsfw ? 1 : 0)});";
                     DBControl.UpdateDB(sql);
 
                     File.Move(RequestLocation + er.FileName, FinalEmoteLocation + er.FileName);
-                    GlobalVars.EmoteList.Add(er.RequestID, new ApprovedEmote(er.RequestID, er.FileExtension, er.Trigger, er.RequiresTarget, er.OutputText));
+                    GlobalVars.EmoteList.Add(er.RequestID, new ApprovedEmote(er.RequestID, er.FileExtension, er.Trigger, er.RequiresTarget, er.OutputText, er.Nsfw));
                     GlobalVars.EmoteRequests.Remove(er.RequestID);
                 }
             }
@@ -160,7 +164,7 @@ namespace Haphrain.Classes.Commands
         public async Task RequestEmote(string trigger, string url, bool RequiresTarget, [Remainder]string msg)
         {
                 if (msg == "") msg = $"is {trigger}";
-                EmoteRequest er = new EmoteRequest(Context.Message.Author, trigger, RequiresTarget, msg);
+                EmoteRequest er = new EmoteRequest(Context.Message.Author, trigger, RequiresTarget, msg, false);
                 string finalURL = "";
                 string[] imgFileTypes = { ".jpg", ".jpeg", ".gif", ".png" };
                 foreach (string s in imgFileTypes)
@@ -242,8 +246,12 @@ namespace Haphrain.Classes.Commands
                         GlobalVars.EmoteRequests.Values.Single(e => e.RequestID == er.RequestID).OutputText = newValue;
                         msg = $"Request {er.RequestID} has been edited.\nNew value for OutputText: `{newValue}`";
                         break;
+                    case "nsfw":
+                        GlobalVars.EmoteRequests.Values.Single(e => e.RequestID == er.RequestID).Nsfw = (newValue == "true" ? true : false);
+                        msg = $"Request {er.RequestID} has been edited.\n{(newValue == "true" ? "Will now be NSFW" : "Will no longer be NSFW!")}";
+                        break;
                     default:
-                        msg = $"Invalid parameter name. Requires `trigger`, `requirestarget` or `outputtext`.\nYou supplied {paramName}" +
+                        msg = $"Invalid parameter name. Requires `trigger`, `requirestarget`, `nsfw` or `outputtext`.\nYou supplied {paramName}" +
                             $"";
                         break;
                 }
@@ -268,6 +276,7 @@ namespace Haphrain.Classes.Commands
             eb.AddField("Request ID:", er.RequestID);
             eb.AddField("Desired trigger:", er.Trigger);
             eb.AddField("Require user target:", er.RequiresTarget);
+            eb.AddField("Nsfw:", er.Nsfw);
             eb.AddField("Output text:", er.OutputText.ToLower().Contains("{author}") ? er.OutputText : "{author} " + er.OutputText);
 
             var chan = Context.Client.GetChannel(623205967462662154) as IMessageChannel;
@@ -288,14 +297,16 @@ namespace Haphrain.Classes.Commands
         public string Trigger { get; }
         public bool RequiresTarget { get; }
         public string OutputText { get; }
+        public bool Nsfw { get; }
 
-        public ApprovedEmote(string id, string fType, string trigger, bool b, string msg)
+        public ApprovedEmote(string id, string fType, string trigger, bool b, string msg, bool nsfw)
         {
             EmoteID = id;
             FileType = fType;
             Trigger = trigger;
             FilePath = FinalEmoteLocation + Trigger + "-" + EmoteID + FileType;
             RequiresTarget = b;
+            Nsfw = nsfw;
             if (msg.ToLower().Contains("{author}"))
                 OutputText = msg;
             else
@@ -312,14 +323,16 @@ namespace Haphrain.Classes.Commands
         public string FileExtension { get; set; }
         public bool RequiresTarget { get; set; }
         public string OutputText { get; set; }
+        public bool Nsfw { get; set; }
 
-        public EmoteRequest(IUser requester, string trigger, bool hasTarget, string msg)
+        public EmoteRequest(IUser requester, string trigger, bool hasTarget, string msg, bool nsfw)
         {
             RequestID = GenerateB64ID();
             RequestedBy = requester;
             Trigger = trigger;
             RequiresTarget = hasTarget;
             OutputText = msg;
+            Nsfw = nsfw;
         }
 
         private string GenerateB64ID()
