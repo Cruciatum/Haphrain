@@ -347,7 +347,7 @@ namespace Haphrain
             await Task.Delay(100);
         }
 
-        private async Task Client_Log(LogMessage arg)
+        internal static async Task Client_Log(LogMessage arg)
         {
             if (arg.Severity <= LogSeverity.Info)
             {

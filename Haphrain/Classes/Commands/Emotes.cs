@@ -95,7 +95,7 @@ namespace Haphrain.Classes.Commands
 
             targetList.Sort();
             eb.AddField("Targetted emotes: ", CraftList(targetList));
-            await Context.Channel.SendMessageAsync(null,false,eb.Build());
+            await Context.Channel.SendMessageAsync(null, false, eb.Build());
         }
         private string CraftList(List<string> list)
         {
@@ -113,14 +113,14 @@ namespace Haphrain.Classes.Commands
         {
             List<string> SuccessfulEmotes = new List<string>();
             string dir = FinalEmoteLocation.Substring(0, FinalEmoteLocation.Length - 1);
-            EmoteRequest er = new EmoteRequest(null,"",false,"",false);
+            EmoteRequest er = new EmoteRequest(null, "", false, "", false);
             if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
             foreach (string s in emoteIDs)
             {
                 if (GlobalVars.EmoteRequests.TryGetValue(s, out er))
                 {
                     SuccessfulEmotes.Add(er.RequestID);
-                    
+
                     if (GlobalVars.RequestMessage.TryGetValue(er.RequestID, out var msg))
                     {
                         await msg.DeleteAsync();
@@ -163,67 +163,77 @@ namespace Haphrain.Classes.Commands
         [Command("emote request"), Alias("er", "e request", "emote r"), Priority(1)]
         public async Task RequestEmote(string trigger, string url, bool RequiresTarget, [Remainder]string msg)
         {
-                if (msg == "") msg = $"is {trigger}";
-                EmoteRequest er = new EmoteRequest(Context.Message.Author, trigger, RequiresTarget, msg, false);
-                string finalURL = "";
-                string[] imgFileTypes = { ".jpg", ".jpeg", ".gif", ".png" };
+            if (msg == "") msg = $"is {trigger}";
+            EmoteRequest er = new EmoteRequest(Context.Message.Author, trigger, RequiresTarget, msg, false);
+            string finalURL = "";
+            string[] imgFileTypes = { ".jpg", ".jpeg", ".gif", ".png" };
+            foreach (string s in imgFileTypes)
+            {
+                if (url.Substring(url.Length - s.Length, s.Length) == s)
+                {
+                    finalURL = url;
+                    er.FileExtension = s;
+                }
+            }
+            if (finalURL == "")
+            {
+                finalURL = url.Contains("tenor") ? ImageLogger.GetTenorGIF(url) : url.Contains("gfycat") ? ImageLogger.GetGfyCatAsync(url) : "";
                 foreach (string s in imgFileTypes)
                 {
-                    if (url.Substring(url.Length - s.Length, s.Length) == s)
+                    if (finalURL.Substring(finalURL.Length - s.Length, s.Length) == s)
                     {
-                        finalURL = url;
                         er.FileExtension = s;
                     }
                 }
-                if (finalURL == "")
+            }
+
+            if (finalURL != "")
+            {
+                string dir = RequestLocation.Substring(0, RequestLocation.Length - 1);
+                if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+                using (var c = new WebClient())
                 {
-                    finalURL = url.Contains("tenor") ? ImageLogger.GetTenorGIF(url) : url.Contains("gfycat") ? ImageLogger.GetGfyCatAsync(url) : "";
-                    foreach (string s in imgFileTypes)
-                    {
-                        if (finalURL.Substring(finalURL.Length - s.Length, s.Length) == s)
-                        {
-                            er.FileExtension = s;
-                        }
-                    }
-                }
-
-                if (finalURL != "")
-                {
-                    string dir = RequestLocation.Substring(0, RequestLocation.Length - 1);
-                    if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
-                    using (var c = new WebClient())
-                    {
-                        try
-                        {
-                            c.DownloadFile(finalURL, RequestLocation + er.FileName);
-                        }
-                        catch (Exception ex) { }
-                        while (c.IsBusy) { }
-                    }
-
-                    GlobalVars.EmoteRequests.Add(er.RequestID, er);
-                    
-                    
-
                     try
                     {
-                        await SendRequest(er);
-                        var m = await Context.Channel.SendMessageAsync($"Emote requested, emote ID: {er.RequestID}");
-                        GlobalVars.AddRandomTracker(m, 15);
-                        var perms = Context.Guild.GetUser(Context.Client.CurrentUser.Id).GetPermissions(Context.Channel as IGuildChannel);
-                        if (perms.ManageMessages)
-                        {
-                            try { await Context.Message.DeleteAsync(); }
-                            catch { }
-                        }
+                        c.DownloadFile(finalURL, RequestLocation + er.FileName);
                     }
-                    catch (Exception ex) { Debug.WriteLine(ex.ToString()); }
+                    catch (Exception ex) { }
+                    while (c.IsBusy) { }
                 }
-                else
+
+                GlobalVars.EmoteRequests.Add(er.RequestID, er);
+
+
+
+                try
                 {
-                    var m = await Context.Channel.SendMessageAsync("Could not get the download URL for this image.");
-                    GlobalVars.AddRandomTracker(m, 20);
+                    await SendRequest(er);
+                    var m = await Context.Channel.SendMessageAsync($"Emote requested, emote ID: {er.RequestID}");
+                    GlobalVars.AddRandomTracker(m, 15);
+                    var perms = Context.Guild.GetUser(Context.Client.CurrentUser.Id).GetPermissions(Context.Channel as IGuildChannel);
+                    if (perms.ManageMessages)
+                    {
+                        try { await Context.Message.DeleteAsync(); }
+                        catch { }
+                    }
                 }
+                catch (Discord.Net.HttpException ex)
+                {
+                    if (ex.DiscordCode == 40005)
+                    {
+                        var m = await Context.Channel.SendMessageAsync($"{Context.User.Mention}, the filesize is too large (~{new FileInfo(RequestLocation + er.FileName).Length / 1048576}MB). Max filesize: 8MB\nPlease resize your image or use another.");
+                        GlobalVars.AddRandomTracker(m, 15);
+                        File.Delete(RequestLocation + er.FileName);
+                        GlobalVars.EmoteRequests.Remove(er.RequestID);
+                    }
+                    await Program.Client_Log(new LogMessage(LogSeverity.Error, "Emote Request", ex.Message, ex));
+                }
+            }
+            else
+            {
+                var m = await Context.Channel.SendMessageAsync("Could not get the download URL for this image.");
+                GlobalVars.AddRandomTracker(m, 20);
+            }
         }
 
         [Command("emote request edit"), Alias("ere", "e request edit", "emote r edit", "e r edit", "emote request e"), Priority(1), RequireBotOwner]
@@ -239,7 +249,7 @@ namespace Haphrain.Classes.Commands
                         msg = $"Request {er.RequestID} has been edited.\nNew value for Trigger: `{newValue}`";
                         break;
                     case "requirestarget":
-                        GlobalVars.EmoteRequests.Values.Single(e => e.RequestID == er.RequestID).RequiresTarget = (newValue == "true" ? true : false );
+                        GlobalVars.EmoteRequests.Values.Single(e => e.RequestID == er.RequestID).RequiresTarget = (newValue == "true" ? true : false);
                         msg = $"Request {er.RequestID} has been edited.\n{(newValue == "true" ? "Will now require a target" : "Will no longer require a target!")}";
                         break;
                     case "outputtext":
