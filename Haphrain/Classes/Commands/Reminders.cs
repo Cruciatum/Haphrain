@@ -23,6 +23,7 @@ namespace Haphrain.Classes.Commands
             userList.AddRange(Context.Guild.Users);
             userList = userList.GroupBy(o => o.Id).Select(o => o.First()).ToList();
             bool hasMention = false;
+
             foreach (string s in msg)
             {
                 try { user = await CustomUserTypereader.GetUserFromString(s, Context.Guild); mentionString = s; hasMention = true; }
@@ -59,24 +60,21 @@ namespace Haphrain.Classes.Commands
                     {
                         if (hasMention)
                         {
-                            string[] splitString = new string[2];
-                            splitString = fullMessage.Split(mentionString);
-                            await Context.Channel.SendMessageAsync(
-                                string.Format("{0}, In {1} {2} I will remind you of your message. {3} {4} {5}",
-                                Context.User.Mention,
-                                (t / multiplier).ToString(),
-                                code,
-                                splitString[0] == "" ? "" : string.Concat("`", splitString[0], "`"),
-                                user.Mention,
-                                splitString[1] == "" ? "" : string.Concat("`", splitString[1], "`")));
-                            TimerStart(t, Context.Channel, Context.User, fullMessage, user, mentionString);
+                            fullMessage.Replace(mentionString, user.Username);
                         }
-                        else
-                        {
-                            await Context.Channel.SendMessageAsync($"{Context.User.Mention}, In {(t / multiplier).ToString()} {code} I will remind you of your message. `{fullMessage}`");
-                            TimerStart(t, Context.Channel, Context.User, fullMessage);
-                        }
+                        await Context.Channel.SendMessageAsync($"{Context.User.Mention}, In {(t / multiplier).ToString()} {code} I will remind you of your message. `{fullMessage}`");
+                        TimerStart(t*1000, Context.Channel, Context.User, fullMessage);
 
+                        DateTime triggerAt = DateTime.Now.AddSeconds(t);
+
+                        string sql = $"INSERT INTO Timers (UserID, GuildID, ChannelID, TimerType, TriggerTime, TimerMessage) VALUES (";
+                        sql += $"{Context.User.Id}, ";
+                        sql += $"{Context.Guild.Id}, ";
+                        sql += $"{Context.Channel.Id}, 'remind', ";
+                        sql += $"'{triggerAt.Year}-{triggerAt.Month}-{triggerAt.Day}-{triggerAt.Hour}-{triggerAt.Minute}-{triggerAt.Second}-{triggerAt.Millisecond}', ";
+                        sql += $"'{Sanitize(fullMessage)}')";
+
+                        DBControl.UpdateDB(sql);
                     }
                 }
                 else
@@ -90,29 +88,30 @@ namespace Haphrain.Classes.Commands
             }
         }
 
-        private void TimerStart(ulong time, ISocketMessageChannel channel, SocketUser user, string msg, IUser u = null, string mentionString = "")
+        internal void TimerStart(ulong time, ISocketMessageChannel channel, SocketUser user, string msg)
         {
             Timer t = new Timer();
             async void handler(object sender, ElapsedEventArgs e)
             {
                 t.Stop();
-                if (u != null && mentionString != "")
-                {
-                    string[] splitString = new string[2];
-                    splitString = msg.Split(mentionString);
-                    await channel.SendMessageAsync(
-                        string.Format("{0}, Automated reminder: {1} {2} {3}",
-                        user.Mention,
-                        splitString[0] == "" ? "" : string.Concat("`", splitString[0], "`"),
-                        u.Mention,
-                        splitString[1] == "" ? "" : string.Concat("`", splitString[1], "`")));
-                }
-                else
-                {
-                    await channel.SendMessageAsync($"{user.Mention}, Automated reminder: `{msg}`");
-                }
+                await channel.SendMessageAsync($"{user.Mention}, Automated reminder: `{msg}`");
             }
-            t.StartTimer(handler,time*1000);
+            t.StartTimer(handler, time);
+        }
+
+        internal string Sanitize(string input)
+        {
+            string output = "";
+            foreach (char c in input)
+            {
+                if (c.ToString() == "'")
+                    output += "§²";
+                else if (c.ToString() == ";")
+                    output += "§³";
+                else
+                    output += c.ToString();
+            }
+            return output;
         }
     }
 
@@ -123,7 +122,7 @@ namespace Haphrain.Classes.Commands
             if (s.IndexOf('@') == -1 || s.Replace("<", "").Replace(">", "").Length != s.Length - 2)
                 throw new Exception("Not a valid user mention.");
 
-            string idStr = s.Replace("<", "").Replace(">", "").Replace("@", "").Replace("!","");
+            string idStr = s.Replace("<", "").Replace(">", "").Replace("@", "").Replace("!", "");
 
             try
             {

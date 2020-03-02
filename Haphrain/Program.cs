@@ -198,6 +198,57 @@ namespace Haphrain
                 dr.Close();
                 #endregion
 
+                #region Get Timers
+                cmd.CommandText = $"SELECT UserID, GuildID, ChannelID, TimerType, TriggerTime, TimerMessage, TimerID FROM Timers";
+                dr = cmd.ExecuteReader();
+                
+                List<TimerObj> timerList = new List<TimerObj>();
+                int timerID = 0;
+                while (dr.Read())
+                {
+                    var o = new TimerObj
+                    {
+                        UserID = ulong.Parse(dr.GetValue(0).ToString()),
+                        GuildID = ulong.Parse(dr.GetValue(1).ToString()),
+                        ChannelID = ulong.Parse(dr.GetValue(2).ToString()),
+                        TimerType = dr.GetValue(3).ToString(),
+                        TriggerTime = dr.GetValue(4).ToString(),
+                        TimerMsg = dr.GetValue(5).ToString()
+                    };
+
+                    timerID = int.Parse(dr.GetValue(6).ToString());
+                    timerList.Add(o);
+                }
+                
+                foreach (var o in timerList)
+                {
+                    if (o.TimerType == "remind")
+                    {
+                        Reminders r = new Reminders();
+                        int time = 0;
+                        List<string> timeParts = o.TriggerTime.Split('-').ToList();
+                        timeParts.RemoveAll(s => s == "-");
+                        int[] intTP = new int[7];
+                        for (int i = 0; i < 7; i++)
+                        {
+                            intTP[i] = int.Parse(timeParts[i]);
+                        }
+                        DateTime dt = new DateTime(intTP[0], intTP[1], intTP[2], intTP[3], intTP[4], intTP[5], intTP[6]);
+                        time = Convert.ToInt32(dt.Subtract(DateTime.Now).TotalMilliseconds);
+
+                        if (time >= 0)
+                            r.TimerStart(Convert.ToUInt64(time), Client.GetGuild(o.GuildID).GetTextChannel(o.ChannelID), Client.GetGuild(o.GuildID).GetUser(o.UserID), o.TimerMsg.Replace("§²", "'").Replace("§³", ";"));
+                        else
+                        {
+                            string sql = $"DELETE FROM Timers WHERE TimerID = {timerID}";
+                            DBControl.UpdateDB(sql);
+                        }
+                    }
+                }
+
+                dr.Close();
+                #endregion
+
                 conn.Close();
                 conn.Dispose();
             }
@@ -442,5 +493,15 @@ namespace Haphrain
         {
             await Client.SetGameAsync($"{bSettings.activity.Replace("{count}", Client.Guilds.Count.ToString())} {bSettings.version}");
         }
+    }
+
+    internal class TimerObj
+    {
+        public ulong UserID { get; set; }
+        public ulong GuildID { get; set; }
+        public ulong ChannelID { get; set; }
+        public string TimerType { get; set; }
+        public string TriggerTime { get; set; }
+        public string TimerMsg { get; set; }
     }
 }
