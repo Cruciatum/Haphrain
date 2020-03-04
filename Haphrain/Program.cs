@@ -29,6 +29,7 @@ namespace Haphrain
         internal static BotSettings bSettings;
         internal static DBSettings dbSettings;
         private Random r = new Random();
+        private bool hasLoaded = false;
 
         static void Main(string[] args) => new Program().MainAsync().GetAwaiter().GetResult();
 
@@ -86,13 +87,15 @@ namespace Haphrain
             t.StartTimer(handler, 5000);
 
             GlobalVars.GameObj = new MortyGame(dbSettings);
-
-            await GetSQLData();
+            
             await Task.Delay(-1);
         }
 
         private async Task GetSQLData()
         {
+            if (hasLoaded)
+                return;
+
             //Load prefix & options from DB
             SqlConnectionStringBuilder sBuilder = new SqlConnectionStringBuilder();
             sBuilder.InitialCatalog = dbSettings.db;
@@ -237,7 +240,13 @@ namespace Haphrain
                         time = Convert.ToInt32(dt.Subtract(DateTime.Now).TotalMilliseconds);
 
                         if (time >= 0)
-                            r.TimerStart(Convert.ToUInt64(time), Client.GetGuild(o.GuildID).GetTextChannel(o.ChannelID), Client.GetGuild(o.GuildID).GetUser(o.UserID), o.TimerMsg.Replace("§²", "'").Replace("§³", ";"));
+                        {
+                            var t = Convert.ToUInt64(time);
+                            var txtChan = Client.GetGuild(o.GuildID).GetTextChannel(o.ChannelID);
+                            var u = Client.GetGuild(o.GuildID).GetUser(o.UserID);
+                            var msg = o.TimerMsg.Replace("§²", "'").Replace("§³", ";");
+                            r.TimerStart(t, txtChan, u, msg);
+                        }
                         else
                         {
                             string sql = $"DELETE FROM Timers WHERE TimerID = {o.TimerID}";
@@ -417,9 +426,11 @@ namespace Haphrain
 
         private async Task Client_Ready()
         {
+            await GetSQLData();
             await UpdateActivity();
             await CheckGuildsStartup();
             await Client_Log(new LogMessage(LogSeverity.Info, "Client_Ready", "Bot ready!"));
+            hasLoaded = true;
         }
 
         private async Task Client_MessageReceived(SocketMessage arg)
