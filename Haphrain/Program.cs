@@ -87,6 +87,7 @@ namespace Haphrain
 
             GlobalVars.GameObj = new MortyGame(dbSettings);
 
+            await GetSQLData();
             await Task.Delay(-1);
         }
 
@@ -203,7 +204,7 @@ namespace Haphrain
                 dr = cmd.ExecuteReader();
                 
                 List<TimerObj> timerList = new List<TimerObj>();
-                int timerID = 0;
+
                 while (dr.Read())
                 {
                     var o = new TimerObj
@@ -213,10 +214,9 @@ namespace Haphrain
                         ChannelID = ulong.Parse(dr.GetValue(2).ToString()),
                         TimerType = dr.GetValue(3).ToString(),
                         TriggerTime = dr.GetValue(4).ToString(),
-                        TimerMsg = dr.GetValue(5).ToString()
-                    };
-
-                    timerID = int.Parse(dr.GetValue(6).ToString());
+                        TimerMsg = dr.GetValue(5).ToString(),
+                        TimerID = int.Parse(dr.GetValue(6).ToString())
+                };
                     timerList.Add(o);
                 }
                 
@@ -240,7 +240,7 @@ namespace Haphrain
                             r.TimerStart(Convert.ToUInt64(time), Client.GetGuild(o.GuildID).GetTextChannel(o.ChannelID), Client.GetGuild(o.GuildID).GetUser(o.UserID), o.TimerMsg.Replace("§²", "'").Replace("§³", ";"));
                         else
                         {
-                            string sql = $"DELETE FROM Timers WHERE TimerID = {timerID}";
+                            string sql = $"DELETE FROM Timers WHERE TimerID = {o.TimerID}";
                             DBControl.UpdateDB(sql);
                         }
                     }
@@ -417,7 +417,6 @@ namespace Haphrain
 
         private async Task Client_Ready()
         {
-            await GetSQLData();
             await UpdateActivity();
             await CheckGuildsStartup();
             await Client_Log(new LogMessage(LogSeverity.Info, "Client_Ready", "Bot ready!"));
@@ -497,6 +496,7 @@ namespace Haphrain
 
     internal class TimerObj
     {
+        public int TimerID { get; set; }
         public ulong UserID { get; set; }
         public ulong GuildID { get; set; }
         public ulong ChannelID { get; set; }
