@@ -21,7 +21,7 @@ namespace Haphrain.Classes.Commands
         [Command("roll"), Summary("Roll any amount of dice of your choice")]
         public async Task Roll(string roll)
         {
-            Regex regex = new Regex(@"^(\d+)[dD](\d+)\+?(\d*)");
+            Regex regex = new Regex(@"^(\d+)[dD](\d+)([\+\-]?)(\d*)");
 
             if (!regex.IsMatch(roll))
             {
@@ -33,8 +33,19 @@ namespace Haphrain.Classes.Commands
             int amt = int.Parse(match.Groups[1].Value);
             int size = int.Parse(match.Groups[2].Value);
             int modifier = 0;
-            if (match.Groups[3].Value != "")
-                modifier += int.Parse(match.Groups[3].Value);
+            string modSign = match.Groups[3].Value;
+
+            if (modSign == "+")
+            {
+                modifier += int.Parse(match.Groups[4].Value);
+            }
+            else if (modSign == "-")
+            {
+                modifier -= int.Parse(match.Groups[4].Value);
+            }
+            else
+                modSign = "";
+                
 
             if (((long)amt * (long)size + (long)modifier) > int.MaxValue)
             {
@@ -60,7 +71,7 @@ namespace Haphrain.Classes.Commands
                     result += t.ToString();
             }
 
-            await Context.Channel.SendMessageAsync($"{Context.User.Mention} has rolled {(total+modifier).ToString()} {(modifier > 0 ? $"*({total.ToString()} + {modifier.ToString()})*" : "")}: ({result}). ");
+            await Context.Channel.SendMessageAsync($"{Context.User.Mention} has rolled {(total+modifier).ToString()} {(modifier != 0 ? $"*({total.ToString()} + {(modifier > 0 ? modifier.ToString() : $"({modifier.ToString()})")})*" : "")}: ({result}). ");
         }
     }
 }
