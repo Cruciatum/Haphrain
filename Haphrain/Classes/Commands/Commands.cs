@@ -22,6 +22,8 @@ namespace Haphrain.Classes.Commands
                     builder.WithTitle("Help: Miscellaneous");
                     builder.AddField($"{prefix}goodbye", "Make me leave this server\n(Server owner only)");
                     builder.AddField($"{prefix}coinflip", "Flip a coin!");
+                    builder.AddField($"{prefix}roll", "Roll a number of dice of whatever value you specify!\n" +
+                        $"Format: *{prefix}roll <amount>D<size>[+<modifier>]*");
                     break;
 
                 case "remind":
