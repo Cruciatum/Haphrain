@@ -151,7 +151,7 @@ namespace Haphrain.Classes.Data
                 {
                     EmbedBuilder t = new EmbedBuilder();
                     t.ImageUrl = e.Url.Contains("tenor") ? GetTenorGIF(e.Url) : e.Url.Contains("gfycat") ? GetGfyCatAsync(e.Url) : e.Url;
-                    await channel.SendMessageAsync($"From: {msg.Author.Mention}({msg.Author.Username}#{msg.Author.Discriminator}) in {MentionUtils.MentionChannel(msg.Channel.Id)}\nURL: {msg.GetJumpUrl()}", false, t.Build());
+                    await channel.SendMessageAsync($"From: {msg.Author.Username}#{msg.Author.Discriminator} in {MentionUtils.MentionChannel(msg.Channel.Id)}\nURL: {msg.GetJumpUrl()}", false, t.Build());
                 }
             }
         }
