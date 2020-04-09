@@ -184,14 +184,14 @@ namespace Haphrain.Classes.Data
                         while (c.IsBusy) { }
                     }
                     if (msg.Content == "")
-                        await channel.SendFileAsync(file, $"From: {msg.Author.Mention}({msg.Author.Username}#{msg.Author.Discriminator}) in {MentionUtils.MentionChannel(msg.Channel.Id)}\nURL: {msg.GetJumpUrl()}");
+                        await channel.SendFileAsync(file, $"From: {msg.Author.Username}#{msg.Author.Discriminator} in {MentionUtils.MentionChannel(msg.Channel.Id)}\nURL: {msg.GetJumpUrl()}");
                     else
-                        await channel.SendFileAsync(file, $"From: {msg.Author.Mention}({msg.Author.Username}#{msg.Author.Discriminator}) in {MentionUtils.MentionChannel(msg.Channel.Id)}\nIncluded message: {msg.Content}\nURL: {msg.GetJumpUrl()}");
+                        await channel.SendFileAsync(file, $"From: {msg.Author.Username}#{msg.Author.Discriminator} in {MentionUtils.MentionChannel(msg.Channel.Id)}\nIncluded message: {msg.Content}\nURL: {msg.GetJumpUrl()}");
                     File.Delete(file);
                 }
                 else
                 {
-                    await channel.SendMessageAsync($"From: {msg.Author.Mention}({msg.Author.Username}#{msg.Author.Discriminator}) in {MentionUtils.MentionChannel(msg.Channel.Id)}\n**Unrecognized Image type**: \"{Path.GetExtension(attached[0].Url).ToUpper()}\"\nURL: {msg.GetJumpUrl()}");
+                    await channel.SendMessageAsync($"From: {msg.Author.Username}#{msg.Author.Discriminator} in {MentionUtils.MentionChannel(msg.Channel.Id)}\n**Unrecognized Image type**: \"{Path.GetExtension(attached[0].Url).ToUpper()}\"\nURL: {msg.GetJumpUrl()}");
                 }
             }
         }
