@@ -21,6 +21,7 @@ namespace Haphrain.Classes.Commands
             StartUnit = StartUnit.ToLower();
             EndUnit = EndUnit.ToLower();
             double amtToConvert = 0d;
+            bool hasDot = false;
 
             #region Errorchecking
             if (!SupportedUnitsDist.Contains(StartUnit))
@@ -38,7 +39,15 @@ namespace Haphrain.Classes.Commands
 
             try
             {
-                amtToConvert = double.Parse(convertAmt);
+                if (convertAmt.Contains(','))
+                {
+                    amtToConvert = double.Parse(convertAmt.Replace(@",", @"."));
+                }
+                else
+                {
+                    amtToConvert = double.Parse(convertAmt);
+                    hasDot = true;
+                }
             }
             catch
             {
@@ -78,6 +87,7 @@ namespace Haphrain.Classes.Commands
 
             NumberFormatInfo ni = new CultureInfo("sv-SE", false).NumberFormat;
             string r = valuesToSend.ToString("N6", ni);
+
             if (r.Contains(','))
             {
                 for (int i = r.Length - 1; i > 0; i--)
@@ -92,6 +102,8 @@ namespace Haphrain.Classes.Commands
                     else break;
                 }
             }
+            if (r.Contains(',') && hasDot)
+                r = r.Replace(@",", @".");
             await Context.Channel.SendMessageAsync($"`{convertAmt} {StartUnit} ≈ {r} {EndUnit}`");
         }
 
@@ -101,6 +113,7 @@ namespace Haphrain.Classes.Commands
             StartUnit = StartUnit.ToUpper();
             EndUnit = EndUnit.ToUpper();
             double amtToConvert = 0d;
+            bool hasDot = false;
 
             #region Errorchecking
             if (!("CFK").Contains(StartUnit))
@@ -124,7 +137,15 @@ namespace Haphrain.Classes.Commands
 
             try
             {
-                amtToConvert = double.Parse(convertAmt);
+                if (convertAmt.Contains(','))
+                {
+                    amtToConvert = double.Parse(convertAmt.Replace(@",", @"."));
+                }
+                else
+                {
+                    amtToConvert = double.Parse(convertAmt);
+                    hasDot = true;
+                }
             }
             catch
             {
@@ -158,6 +179,8 @@ namespace Haphrain.Classes.Commands
                     else break;
                 }
             }
+            if (r.Contains(',') && hasDot)
+                r = r.Replace(@",", @".");
             await Context.Channel.SendMessageAsync($"`{convertAmt} °{StartUnit} ≈ {r} °{EndUnit}`");
         }
 
@@ -167,6 +190,7 @@ namespace Haphrain.Classes.Commands
             StartUnit = StartUnit.ToLower();
             EndUnit = EndUnit.ToLower();
             double amtToConvert = 0d;
+            bool hasDot = false;
 
             #region Errorchecking
             if (!SupportedUnitsLiq.Contains(StartUnit))
@@ -184,7 +208,15 @@ namespace Haphrain.Classes.Commands
 
             try
             {
-                amtToConvert = double.Parse(convertAmt);
+                if (convertAmt.Contains(','))
+                {
+                    amtToConvert = double.Parse(convertAmt.Replace(@",", @"."));
+                }
+                else
+                {
+                    amtToConvert = double.Parse(convertAmt);
+                    hasDot = true;
+                }
             }
             catch
             {
@@ -234,6 +266,8 @@ namespace Haphrain.Classes.Commands
                     else break;
                 }
             }
+            if (r.Contains(',') && hasDot)
+                r = r.Replace(@",", @".");
             await Context.Channel.SendMessageAsync($"`{convertAmt} {StartUnit} ≈ {r} {EndUnit}`");
         }
 
@@ -251,6 +285,7 @@ namespace Haphrain.Classes.Commands
             if (EndUnit == "stone") EndUnit = "st";
 
             double amtToConvert = 0d;
+            bool hasDot = false;
 
             #region Errorchecking
             if (!SupportedUnitsWgt.Contains(StartUnit))
@@ -268,7 +303,15 @@ namespace Haphrain.Classes.Commands
 
             try
             {
-                amtToConvert = double.Parse(convertAmt);
+                if (convertAmt.Contains(','))
+                {
+                    amtToConvert = double.Parse(convertAmt.Replace(@",", @"."));
+                }
+                else
+                {
+                    amtToConvert = double.Parse(convertAmt);
+                    hasDot = true;
+                }
             }
             catch
             {
@@ -324,6 +367,8 @@ namespace Haphrain.Classes.Commands
                     else break;
                 }
             }
+            if (r.Contains(',') && hasDot)
+                r = r.Replace(@",", @".");
             await Context.Channel.SendMessageAsync($"`{convertAmt} {StartUnit} ≈ {r} {EndUnit}`");
         }
     }
