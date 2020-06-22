@@ -67,6 +67,7 @@ namespace Haphrain.Classes.Commands
                     builder.AddField("Temperature Conversion", $"{prefix}convert temp <#> <start unit> <end unit>\n[Supported units: C/F/K]");
                     builder.AddField("Liquid Measure Conversion", $"{prefix}convert liq <#> <start unit> <end unit>\n[Supported units: l/dl/cl/ml; gal/oz]");
                     builder.AddField("Weight Conversion", $"{prefix}convert wgt <#> <start unit> <end unit>\n[Supported units: kg/g/dg/cg/mg; st/lbs/oz]");
+                    builder.AddField("Currency Conversion", $"{prefix}convert cur <#> <start unit> <end unit>\n[Supported units: Use the codes at https://currencylayer.com/currencies]");
                     break;
 
                 case "define":
