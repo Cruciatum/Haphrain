@@ -32,6 +32,8 @@ namespace Haphrain
         internal static Dictionary<string, IUserMessage> RequestMessage = new Dictionary<string, IUserMessage>();
 
         internal static List<GuildOption> GuildOptions { get; set; } = new List<GuildOption>();
+        internal static Dictionary<string, Currency> CurrencyList = new Dictionary<string, Currency>();
+        internal static DateTime CurrencyLastUpdated = new DateTime();
 
         internal static List<TrackedMessage> TrackedLogChannelMessages { get; set; } = new List<TrackedMessage>(); //For changing log channel
         internal static List<TrackedMessage> TrackedSettingsMessages { get; set; } = new List<TrackedMessage>(); //For changing settings

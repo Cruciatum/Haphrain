@@ -371,6 +371,71 @@ namespace Haphrain.Classes.Commands
                 r = r.Replace(@",", @".");
             await Context.Channel.SendMessageAsync($"`{convertAmt} {StartUnit} ≈ {r} {EndUnit}`");
         }
+
+        [Command("convert cur"), Summary("Convert between currency units"), Priority(2)]
+        public async Task ConvertCurrency(string convertAmt, string StartUnit, string EndUnit)
+        {
+            if (!GlobalVars.CurrencyList.Keys.Contains(StartUnit.ToUpper())) {
+                var msg = await Context.Channel.SendMessageAsync($"The provided start unit ({StartUnit}) was not recognized.");
+                GlobalVars.AddRandomTracker(msg);
+                return;
+            }
+            if (!GlobalVars.CurrencyList.Keys.Contains(EndUnit.ToUpper()))
+            {
+                var msg = await Context.Channel.SendMessageAsync($"The provided end unit ({EndUnit}) was not recognized.");
+                GlobalVars.AddRandomTracker(msg);
+                return;
+            }
+
+            double amtToConvert = 0d;
+            bool hasDot = false;
+
+            #region Errorchecking
+            try
+            {
+                if (convertAmt.Contains(','))
+                {
+                    amtToConvert = double.Parse(convertAmt.Replace(@",", @"."));
+                }
+                else
+                {
+                    amtToConvert = double.Parse(convertAmt);
+                    hasDot = true;
+                }
+            }
+            catch
+            {
+                var msg = await Context.Channel.SendMessageAsync($"{Context.User.Mention} -> Something went wrong while reading your number, your entry: {convertAmt}");
+                GlobalVars.AddRandomTracker(msg);
+                return;
+            }
+            #endregion
+
+            double valuesToSend = 0d;
+
+            var toUSD = amtToConvert * GlobalVars.CurrencyList[StartUnit.ToUpper()].ValueInUSD;
+            valuesToSend = GlobalVars.CurrencyList[EndUnit.ToUpper()].ValueInUSD / toUSD;
+
+            NumberFormatInfo ni = new CultureInfo("sv-SE", false).NumberFormat;
+            string r = valuesToSend.ToString("N6", ni);
+            if (r.Contains(','))
+            {
+                for (int i = r.Length - 1; i > 0; i--)
+                {
+                    if (!r.Contains(',')) break;
+                    if (r[i] == '0' || r[i] == ',')
+                    {
+                        var rArray = r.ToList();
+                        rArray.RemoveAt(i);
+                        r = string.Join("", rArray);
+                    }
+                    else break;
+                }
+            }
+            if (r.Contains(',') && hasDot)
+                r = r.Replace(@",", @".");
+            await Context.Channel.SendMessageAsync($"`{convertAmt} {GlobalVars.CurrencyList[StartUnit.ToUpper()].FullName} ≈ {r} {GlobalVars.CurrencyList[EndUnit.ToUpper()].FullName}`");
+        }
     }
 
     internal static class ConvertHelpers

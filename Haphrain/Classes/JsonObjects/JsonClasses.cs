@@ -231,6 +231,44 @@ namespace Haphrain.Classes.JsonObjects
     }
     #endregion
 
+    #region CurrencyLayer Types
+    public partial class CurrencyDefinition
+    {
+        [JsonProperty("success")]
+        public bool Success { get; set; }
+
+        [JsonProperty("terms")]
+        public Uri Terms { get; set; }
+
+        [JsonProperty("privacy")]
+        public Uri Privacy { get; set; }
+
+        [JsonProperty("currencies")]
+        public Dictionary<string, string> Currencies { get; set; }
+    }
+
+    public partial class CurrencyConversionList
+    {
+        [JsonProperty("success")]
+        public bool Success { get; set; }
+
+        [JsonProperty("terms")]
+        public Uri Terms { get; set; }
+
+        [JsonProperty("privacy")]
+        public Uri Privacy { get; set; }
+
+        [JsonProperty("timestamp")]
+        public long Timestamp { get; set; }
+
+        [JsonProperty("source")]
+        public string Source { get; set; }
+
+        [JsonProperty("quotes")]
+        public Dictionary<string, double> Quotes { get; set; }
+    }
+    #endregion
+
     #region Imgur Types
     //Types from Imgur API here
     #endregion

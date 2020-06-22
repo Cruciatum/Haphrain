@@ -86,6 +86,18 @@ namespace Haphrain
             }
             t.StartTimer(handler, 5000);
 
+            GlobalVars.CurrencyList = await Setup.GetCurrencies(Constants._CURRENCYLAYER_);
+            GlobalVars.CurrencyLastUpdated = DateTime.Now;
+
+            Timer CurT = new Timer();
+            CurT.AutoReset = true;
+            async void CurHandler(object sender, ElapsedEventArgs e)
+            {
+                GlobalVars.CurrencyList = await Setup.GetCurrencies(Constants._CURRENCYLAYER_);
+                GlobalVars.CurrencyLastUpdated = DateTime.Now;
+            }
+            CurT.StartTimer(CurHandler, 86400000);
+
             GlobalVars.GameObj = new MortyGame(dbSettings);
             
             await Task.Delay(-1);
