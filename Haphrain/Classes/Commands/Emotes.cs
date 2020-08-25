@@ -49,18 +49,13 @@ namespace Haphrain.Classes.Commands
                 ApprovedEmote selected = foundEmotes[r.Next(0, foundEmotes.Count)];
                 string msg = selected.OutputText;
                 if (msg.ToLower().Contains("{author}"))
-                    msg = msg.Replace("{author}", Context.User.Mention);
+                    msg = msg.Replace("{author}", Context.User.Username);
                 else
-                    msg = Context.User.Mention + " " + msg;
+                    msg = Context.User.Username + " " + msg;
                 if (usr != null)
-                    msg = msg.Replace("{target}", usr.Mention);
-                await Context.Channel.SendFileAsync(selected.FilePath, msg);
+                    msg = msg.Replace("{target}", usr.Username);
+                await Context.Channel.SendFileAsync(selected.FilePath, "`" + msg + "`");
                 var perms = Context.Guild.GetUser(Context.Client.CurrentUser.Id).GetPermissions(Context.Channel as IGuildChannel);
-                if (perms.ManageMessages)
-                {
-                    try { await Context.Message.DeleteAsync(); }
-                    catch { }
-                }
             }
             else
             {
