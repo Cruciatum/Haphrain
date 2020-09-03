@@ -58,7 +58,7 @@ namespace Haphrain.Classes.Commands
 
             if (GlobalVars.MortyTimeouts[Context.User.Id])
             {
-                int timeLeft = Convert.ToInt32((GlobalVars.MortyLastUse[Context.User.Id].AddHours(1) - DateTime.Now).TotalSeconds);
+                int timeLeft = Convert.ToInt32((GlobalVars.MortyLastUse[Context.User.Id].AddMinutes(30) - DateTime.Now).TotalSeconds);
                 int timeLeftMinutes = 0;
                 while (timeLeft >= 60)
                 {
@@ -149,7 +149,7 @@ namespace Haphrain.Classes.Commands
                 GlobalVars.MortyTimeouts[Context.User.Id] = false;
                 ti.Dispose();
             }
-            ti.StartTimer(handler, 3600000);
+            ti.StartTimer(handler, 1800000);
         }
 
         [Command("mortyorder"), Alias("mo"), Summary("Change how your list of Mortys appears")]
