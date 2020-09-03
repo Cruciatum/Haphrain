@@ -24,6 +24,7 @@ namespace Haphrain
         internal static Random randGenerator = new Random();
         internal static List<ulong> RegisteredMortyUsers { get; set; }
         internal static Dictionary<ulong, bool> MortyTimeouts { get; set; }
+        internal static Dictionary<ulong, DateTime> MortyLastUse { get; set; }
 
         internal static Dictionary<ulong, IUser> FriendUsers = new Dictionary<ulong, IUser>();
         internal static Dictionary<ulong, IUser> IgnoredUsers = new Dictionary<ulong, IUser>();

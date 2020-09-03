@@ -209,8 +209,12 @@ namespace Haphrain
                 }
                 GlobalVars.RegisteredMortyUsers = mortyUsers;
                 GlobalVars.MortyTimeouts = new Dictionary<ulong, bool>();
+                GlobalVars.MortyLastUse = new Dictionary<ulong, DateTime>();
                 foreach (ulong u in GlobalVars.RegisteredMortyUsers)
+                {
                     GlobalVars.MortyTimeouts.Add(u, false);
+                    GlobalVars.MortyLastUse.Add(u, DateTime.MinValue);
+                }
                 dr.Close();
                 #endregion
 

@@ -27,6 +27,7 @@ namespace Haphrain.Classes.Commands
 
             GlobalVars.RegisteredMortyUsers.Add(Context.User.Id);
             GlobalVars.MortyTimeouts.Add(Context.User.Id, false);
+            GlobalVars.MortyLastUse.Add(Context.User.Id, DateTime.MinValue);
 
             string prefix = GlobalVars.GuildOptions.SingleOrDefault(x => x.GuildID == Context.Guild.Id).Prefix;
             await Context.Channel.SendMessageAsync($"Hi {Context.User.Mention}, you can now use `{prefix}morty` in order to start gathering your Mortys!");
@@ -57,7 +58,16 @@ namespace Haphrain.Classes.Commands
 
             if (GlobalVars.MortyTimeouts[Context.User.Id])
             {
-                var m = await Context.Channel.SendMessageAsync($"{Context.User.Mention}, your portal gun is out of energy. Please wait for it to recharge!");
+                int timeLeft = Convert.ToInt32((GlobalVars.MortyLastUse[Context.User.Id].AddHours(1) - DateTime.Now).TotalSeconds);
+                int timeLeftMinutes = 0;
+                while (timeLeft >= 60)
+                {
+                    timeLeftMinutes++;
+                    timeLeft -= 60;
+                }
+                var m = await Context.Channel.SendMessageAsync(
+                    $"{Context.User.Mention}, your portal gun is out of energy. Please wait for it to recharge!\n" 
+                    + $"Time left: {timeLeftMinutes}min, {timeLeft}s.");
                 GlobalVars.AddRandomTracker(m);
                 return;
             }
@@ -130,6 +140,7 @@ namespace Haphrain.Classes.Commands
                 await Context.Channel.SendMessageAsync($"{Context.User.Mention}, it seems like you were looking in the wrong dimensions...\nYou couldn't find any Mortys!");
 
             GlobalVars.MortyTimeouts[Context.User.Id] = true;
+            GlobalVars.MortyLastUse[Context.User.Id] = DateTime.Now;
 
             Timer ti = new Timer();
             void handler(object sender, ElapsedEventArgs e)
