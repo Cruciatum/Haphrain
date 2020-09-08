@@ -19,6 +19,61 @@ namespace Haphrain.Classes.Commands
             await chan.SendMessageAsync(msg);
         }
 
+        [Command("dm"), 
+            Summary("Secretly send a Direct Message to the specified User/User ID OR the bot owner!"), 
+            RequireBotPermission(ChannelPermission.ManageMessages, ErrorMessage = "USERMENTION, I can't delete messages here\nIf this was meant to be private, please delete it yourself!"), 
+            Priority(0)]
+        public async Task DirMsg(string usr, [Remainder]string msg)
+        {
+            ulong usrID;
+            if (usr == "owner") { usrID = 187675380423852032; }
+            else usrID = ulong.Parse(usr);
+
+            IUser u = null;
+            foreach (var g in GlobalVars.Client.Guilds)
+            {
+                var foundUsr = g.Users.SingleOrDefault(x => x.Id == usrID);
+                if (foundUsr != null) { u = foundUsr; break; }
+            }
+
+            string eMsg = "";
+            if (u == null) { u = Context.Message.Author; eMsg = $"I couldn't find this user, please make sure I share a guild with this user before attempting that command!"; }
+            IDMChannel c = await u.GetOrCreateDMChannelAsync();
+            while (c == null) { }
+            if (eMsg == "")
+            {
+                var endMsg = $"**Message from:**\n {Context.Message.Author}\n**Content:**\n`{msg}`";
+                if (Context.Message.Attachments.Count != 0) {
+                    endMsg += $"\nAttached files:";
+                    foreach (Attachment a in Context.Message.Attachments)
+                    {
+                        endMsg += $"\n{a.Url}";
+                    }
+                }
+                await c.SendMessageAsync(endMsg);
+            }
+            else
+            {
+                var endMsg = $"**Error:**\n{eMsg}\n\nYour message was still deleted for privacy.\nYour message:\n{msg}";
+                if (Context.Message.Attachments.Count != 0)
+                {
+                    endMsg += $"\nAttached files:";
+                    foreach (Attachment a in Context.Message.Attachments)
+                    {
+                        endMsg += $"\n{a.Url}";
+                    }
+                }
+                await c.SendMessageAsync(endMsg);
+            }
+                
+            await Context.Message.DeleteAsync();
+        }
+        [Command("dm"), 
+            Summary("Secretly send a Direct Message to the specified User/User ID OR the bot owner!"), 
+            RequireBotPermission(ChannelPermission.ManageMessages, ErrorMessage = "USERMENTION, I can't delete messages here\nIf this was meant to be private, please delete it yourself!"), 
+            Priority(1)]
+        public async Task DirMsg(IUser usr, [Remainder]string msg) { await DirMsg(usr.Id.ToString(), msg); }
+
         [Command("get channels"), Summary("Send channel IDs to the bot owner, based on guild ID"), RequireBotOwner]
         public async Task GetChannels(ulong guildID)
         {

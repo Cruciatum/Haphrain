@@ -99,6 +99,7 @@ namespace Haphrain
             CurT.StartTimer(CurHandler, 86400000);
 
             GlobalVars.GameObj = new MortyGame(dbSettings);
+            GlobalVars.Client = Client;
             
             await Task.Delay(-1);
         }
@@ -466,11 +467,9 @@ namespace Haphrain
             //Get rid of Zero-Width Spaces
             context.Message.Content.Replace("\u200b", "");
 
-            if ((context.Message.Content.ToLower().Contains("bubble") || context.Message.Content.ToLower().Contains("bubbie")) && (context.User.Id == 635873165758824449 || context.User.Id == 113310376623403008)) { await context.Channel.SendMessageAsync($"I'M NOT DOING IT {context.User.Mention}!"); return; }
-
             int argPos = 0;
 
-            if (guildOptions.Options.LogChannelID != 0)
+            if (guildOptions.Options.LogChannelID != 0 && msg.Content.Substring(1,2).ToLower() != "dm")
             {
                 if (guildOptions.Options.LogEmbeds)
                     if (msg.Embeds.Count > 0) { await ImageLogger.LogEmbed(msg, guildOptions.Options.LogChannelID, Client); }
@@ -488,7 +487,7 @@ namespace Haphrain
                 Result = await Commands.ExecuteAsync(context, argPos, Provider);
                 if (Result.Error == CommandError.UnmetPrecondition)
                 {
-                    var errorMsg = await context.Channel.SendMessageAsync(Result.ErrorReason);
+                    var errorMsg = await context.Channel.SendMessageAsync(Result.ErrorReason.Contains("USERMENTION")? Result.ErrorReason.Replace("USERMENTION",context.Message.Author.Mention): Result.ErrorReason);
                     GlobalVars.AddRandomTracker(errorMsg);
                 }
                 else if (!Result.IsSuccess)

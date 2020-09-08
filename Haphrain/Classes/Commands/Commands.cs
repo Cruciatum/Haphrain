@@ -24,6 +24,10 @@ namespace Haphrain.Classes.Commands
                     builder.AddField($"{prefix}coinflip", "Flip a coin!");
                     builder.AddField($"{prefix}roll", "Roll a number of dice of whatever value you specify!\n" +
                         $"Format: *{prefix}roll <amount>D<size>[+/-][<modifier>]*");
+                    builder.AddField($"{prefix}dm <userID/Mention>", "Privately DM a user without it showing up on your own DMs!\n" +
+                        "**CAN SEND IMAGES**");
+                    builder.AddField($"{prefix}dm owner", "Don't know the owner of the bot, but want to send them a message? Well here you go!\n"+
+                        "**CAN SEND IMAGES**");
                     break;
 
                 case "remind":
