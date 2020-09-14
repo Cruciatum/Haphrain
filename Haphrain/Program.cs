@@ -469,7 +469,7 @@ namespace Haphrain
 
             int argPos = 0;
 
-            if (guildOptions.Options.LogChannelID != 0 && msg.Content.Substring(1,2).ToLower() != "dm")
+            if (guildOptions.Options.LogChannelID != 0 && !msg.Content.StartsWith($"{guildOptions.Prefix}dm"))
             {
                 if (guildOptions.Options.LogEmbeds)
                     if (msg.Embeds.Count > 0) { await ImageLogger.LogEmbed(msg, guildOptions.Options.LogChannelID, Client); }
